@@ -1,0 +1,41 @@
+---
+title: "wasteloadR"
+output: 
+  flexdashboard::flex_dashboard:
+    theme: yeti
+    orientation: rows
+runtime: shiny
+---
+
+```{r, echo=F}
+library(shiny)
+library(wqTools)
+library(leaflet)
+library(shinybusy)
+library(plotly)
+```
+
+```{r, echo=F}
+source('findPermitMod.R')
+source('permitGaugeMod.R')
+```
+
+# `r icon("search-location")` Find your permit 
+```{r, echo=F}
+findPermitModUI('pid_data')
+pid_data=callModule(module=findPermitMod, id='pid_data')
+
+effluent_data=reactive({
+	req(pid_data$ec_data())
+	pid_data$ec_data()
+})
+```
+
+
+# `r icon('tachometer-alt')` Effluent charts 
+```{r, echo=F}
+permitGaugeModUI('permit_gauge1')
+permit_gauge1=callModule(module=permitGaugeMod, id='permit_gauge1', effluent_data)
+```
+
+
