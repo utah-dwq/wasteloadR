@@ -1,28 +1,23 @@
 # Permit gauge module
 
-css <- HTML("
-.html-widget.gauge svg {
-  height: 300px;
-  width: 100%;
-}")
-
 permitGaugeModUI <- function(id){
 	ns <- NS(id)
 	tagList(		
-		tags$head(tags$style(css)),
 		fluidRow(
 			column(3, 
 				uiOutput(ns("feature_picker")),
-				uiOutput(ns("loc_picker")),
-				uiOutput(ns("param_picker"))
+				uiOutput(ns("loc_picker"))
 			),
-			column(3,
-				uiOutput(ns("stat_picker")),
+			column(3, 
+				uiOutput(ns("param_picker")),
+				uiOutput(ns("stat_picker"))
+			),
+			column(3, 
 				uiOutput(ns("unit_picker"))
 			),
-			column(6, flexdashboard::gaugeOutput(ns("gauge"), width="100%", height="100%"))
+			column(3, flexdashboard::gaugeOutput(ns("gauge")))
 		),
-		plotlyOutput(ns("time_series"))
+		fluidRow(plotlyOutput(ns("time_series")))
 	)
 }
 

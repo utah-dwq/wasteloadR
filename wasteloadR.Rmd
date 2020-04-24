@@ -4,6 +4,7 @@ output:
   flexdashboard::flex_dashboard:
     theme: yeti
     orientation: rows
+    css: styles.css
 runtime: shiny
 ---
 
@@ -13,14 +14,12 @@ library(wqTools)
 library(leaflet)
 library(shinybusy)
 library(plotly)
-```
-
-```{r, echo=F}
 source('findPermitMod.R')
 source('permitGaugeMod.R')
+permits_coords=read.csv(file="permits_coords.csv")
 ```
 
-# `r icon("search-location")` Find your permit 
+# `r icon("search")` Find permit 
 ```{r, echo=F}
 findPermitModUI('pid_data')
 pid_data=callModule(module=findPermitMod, id='pid_data')
@@ -37,5 +36,10 @@ effluent_data=reactive({
 permitGaugeModUI('permit_gauge1')
 permit_gauge1=callModule(module=permitGaugeMod, id='permit_gauge1', effluent_data)
 ```
+
+# `r icon("search-location")` Find WQ data
+
+
+
 
 
