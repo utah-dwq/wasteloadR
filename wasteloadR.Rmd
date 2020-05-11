@@ -2,8 +2,8 @@
 title: "wasteloadR"
 output: 
   flexdashboard::flex_dashboard:
+    orientation: columns
     theme: yeti
-    orientation: rows
     css: styles.css
 runtime: shiny
 ---
@@ -12,24 +12,53 @@ runtime: shiny
 library(shiny)
 library(wqTools)
 library(leaflet)
+library(leaflet.extras)
 library(shinybusy)
 library(plotly)
-source('findPermitMod.R')
+library(sortable)
+library(shinyWidgets)
+#library(waiter)
+source('findDataMod.R')
 source('permitGaugeMod.R')
+source('figuresMod.R')
+source('wasteloadR_stats.R')
+source('wlStatsMod.R')
 permits_coords=read.csv(file="permits_coords.csv")
-```
-
-# `r icon("search")` Find permit 
-```{r, echo=F}
-findPermitModUI('pid_data')
-pid_data=callModule(module=findPermitMod, id='pid_data')
-
-effluent_data=reactive({
-	req(pid_data$ec_data())
-	pid_data$ec_data()
+permits_coords=within(permits_coords, {
+	lab=paste0(
+		'<p>',
+		"Permit ID: ", locationID,
+		'<br />', "Name: ", locationName,
+		'<br />', "Type: ", locationType)	
 })
+
 ```
 
+# `r icon("search")` Find data 
+```{r, echo=F}
+findDataModUI('found_data')
+found_data=callModule(module=findDataMod, id='found_data', permits_coords=permits_coords)
+
+## Extract effluent data from findDataMod
+effluent_data=reactive({
+	req(found_data$ec_data())
+	found_data$ec_data()
+})
+
+## Extract permit ID from findPermitMod
+pid=reactive({gsub(" .*$", "", found_data$pid())})
+
+## Extract wq data
+wq_data=reactive({
+	req(found_data$wq_data())
+	found_data$wq_data()
+})
+
+observe({
+	print(head(wq_data()))
+})
+
+```
 
 # `r icon('tachometer-alt')` Effluent charts 
 ```{r, echo=F}
@@ -37,7 +66,28 @@ permitGaugeModUI('permit_gauge1')
 permit_gauge1=callModule(module=permitGaugeMod, id='permit_gauge1', effluent_data)
 ```
 
-# `r icon("search-location")` Find WQ data
+# `r icon('chart-line')` Water quality analysis
+```{r}
+figuresModUI('figures')
+figures=callModule(module=figuresMod, id='figures', wq_data)
+```
+
+#  `r icon('table')` Wasteload stats
+
+```{r}
+wlStatsModUI('wl_stats')
+wl_stats=callModule(module=wlStatsMod, id='wl_stats', wq_data)
+```
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -27,8 +27,8 @@ source('permitGaugeMod.R')
 ui <-fluidPage(
 	# Waiter setup
 	#add_busy_bar(color = "#FF0000"),
-	#use_waiter(),
-	#waiter_show_on_load(spinner),
+	use_waiter(),
+	waiter_show_on_load(spinner),
 	
 	## Header
 	headerPanel(
