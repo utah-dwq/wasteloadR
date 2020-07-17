@@ -253,6 +253,7 @@ findDataMod <- function(input, output, session, permits_coords){
 		wq_data=wqTools::readWQP(type='result', siteid=robs$sel_sites)
 		wq_data=merge(wq_data, subset(map_sites(), MonitoringLocationIdentifier %in% robs$sel_sites))
 		wq_data$value=wqTools::facToNum(wq_data$ResultMeasureValue)
+		wq_data$ResultSampleFractionText[is.na(wq_data$ResultSampleFractionText)]="None"
 		#wq_data=wqTools::assignAUs(wq_data)
 		remove_modal_spinner()
 		wq_data

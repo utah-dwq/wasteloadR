@@ -1,0 +1,3 @@
+name: Wasteload
+create_dir: true
+description: Template for writing wasteload rmarkdown documents

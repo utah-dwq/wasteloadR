@@ -2,7 +2,7 @@
 title: "wasteloadR"
 output: 
   flexdashboard::flex_dashboard:
-    orientation: columns
+    orientation: rows
     theme: yeti
     css: styles.css
 runtime: shiny
@@ -51,11 +51,7 @@ pid=reactive({gsub(" .*$", "", found_data$pid())})
 ## Extract wq data
 wq_data=reactive({
 	req(found_data$wq_data())
-	found_data$wq_data()
-})
-
-observe({
-	print(head(wq_data()))
+	wq_data=found_data$wq_data()
 })
 
 ```

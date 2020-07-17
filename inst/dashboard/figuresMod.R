@@ -28,28 +28,31 @@ figuresModUI <- function(id){
 figuresMod <- function(input, output, session, wq_data){
 	
 	
+	
+	# Note - currently dropping all NA values in data for figures. Need to add ability to fill w/ detection limts
+	
 	# Empty reactive objects
 	reactive_objects=reactiveValues()
 
 	# Get data & format
 	#observe({
-	#	req(wq_data())
-	#	wq_data=wq_data()
+	#	req(subset(wq_data(), !is.na(value)))
+	#	wq_data=subset(wq_data(), !is.na(value))
 	#	wq_data$ActivityStartDate=as.Date(wq_data$ActivityStartDate)
 	#	wq_data$ResultMeasure.MeasureUnitCode=toupper(wq_data$ResultMeasure.MeasureUnitCode)
-	#	wq_data()=wq_data
+	#	subset(wq_data(), !is.na(value))=wq_data
 	#})
 	
 	# Select param 1
 	output$sel_param1 <- renderUI({
 		ns <- session$ns
-		req(wq_data()$CharacteristicName)
-		selectInput(ns("sel_param1"),"Select parameter 1", choices = unique(wq_data()$CharacteristicName[order(wq_data()$CharacteristicName)]))
+		req(subset(wq_data(), !is.na(value))$CharacteristicName)
+		selectInput(ns("sel_param1"),"Select parameter 1", choices = unique(subset(wq_data(), !is.na(value))$CharacteristicName[order(subset(wq_data(), !is.na(value))$CharacteristicName)]))
 	})
 	
 	observe({
 		req(input$sel_param1)
-		reactive_objects$param1_sub=wq_data()[wq_data()$CharacteristicName == input$sel_param1,]
+		reactive_objects$param1_sub=subset(wq_data(), !is.na(value))[subset(wq_data(), !is.na(value))$CharacteristicName == input$sel_param1,]
 	})
 	
 	observe({
@@ -68,7 +71,7 @@ figuresMod <- function(input, output, session, wq_data){
 	
     
 	observe({
-		req(wq_data())
+		req(subset(wq_data(), !is.na(value)))
 		ns <- session$ns
 		updateSelectInput(session, ns('sel_units1'), selected="")
 	})
@@ -81,7 +84,7 @@ figuresMod <- function(input, output, session, wq_data){
 	})
     
 	observe({
-		req(wq_data())
+		req(subset(wq_data(), !is.na(value)))
 		ns <- session$ns
 		updateSelectInput(session, ns('sel_frac1'), selected="")
 	})
@@ -90,7 +93,7 @@ figuresMod <- function(input, output, session, wq_data){
 	observe({
 		req(input$sel_param1, input$sel_units1, input$sel_frac1)
 			## Data
-			param1=subset(wq_data(), CharacteristicName == input$sel_param1 & ResultSampleFractionText==input$sel_frac1)
+			param1=subset(subset(wq_data(), !is.na(value)), CharacteristicName == input$sel_param1 & ResultSampleFractionText==input$sel_frac1)
 			if(dim(param1)[1]>0){
 				param1$target_unit=input$sel_units1
 				param1=wqTools::convertUnits(param1, input_units='ResultMeasure.MeasureUnitCode', target_units = "target_unit", value_var='value', conv_val_col='plot_value')
@@ -288,8 +291,8 @@ figuresMod <- function(input, output, session, wq_data){
 		select_data=reactive({event_data("plotly_selected", source="a")}),
 		param1=reactive({input$sel_param1}),
 		param_choices=reactive({
-				req(wq_data())
-				unique(wq_data()$CharacteristicName[order(wq_data()$CharacteristicName)])
+				req(subset(wq_data(), !is.na(value)))
+				unique(subset(wq_data(), !is.na(value))$CharacteristicName[order(subset(wq_data(), !is.na(value))$CharacteristicName)])
 			}),
 		multi_site_ts=multi_site_ts,
 		multi_site_bp=multi_site_bp#,

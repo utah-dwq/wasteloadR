@@ -64,8 +64,17 @@ wasteloadR_stats=function(data,
 			value=ifelse(is.na(value) & ResultDetectionConditionText=="Not Detected", DetectionQuantitationLimitMeasure.MeasureValue, value)	
 		})
 	}
+	if(nd == "NA"){
+		data=within(data, {
+			value=ifelse(ResultDetectionConditionText=="Not Detected", NA, value)
+		})
+	}
+	
+	data$value=wqTools::facToNum(data$value)
 	
 	with(subset(data, ResultDetectionConditionText=="Not Detected"), {all(DetectionQuantitationLimitMeasure.MeasureUnitCode==ResultMeasure.MeasureUnitCode)})
+	
+	data=data[!is.na(data$value),]
 	
 	
 	# Fill over-detects
