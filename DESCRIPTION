@@ -17,4 +17,7 @@ Imports:
     bookdown,
     shiny,
     rmarkdown,
-    wqTools
+    wqTools,
+    leaflet,
+    miniUI,
+    shinyWidgets
