@@ -3,6 +3,140 @@ title: "Wasteload"
 author: "Your Name Here"
 date: "`r Sys.Date()`"
 output:
-  bookdown::html_document2:
-    code_folding: "hide"
+  bookdown::html_document2
 ---
+
+# Libraries
+library(wqTools)
+library(wasteloadR)
+library(dataRetrieval)
+library(dplyr)
+library(writexl)
+library(DT)
+library(knitr)
+
+# Find and extract data
+
+## Select a permit ID (optional, this is used to help set the view for finding sites)
+Use the permit selection gadget, then update permit_id. If you already know your permit ID, you can skip selectPermit().
+```{r}
+selectPermit()
+pid="UT0021741"
+permit_location=subset(wasteloadR::permits_coords, permit_id==pid)
+permit_location
+```
+
+## Find and select sites
+Use the findSites() gadget to find and select permit, monitoring location, and 
+```{r}
+qsites=findSites()
+knitr::kable(qsites)
+```
+
+## Location map
+```{r}
+map_sites=within(qsites, {
+	lab=paste0(
+		'<p>',
+		'<br />', "Site ID: ", site_id,
+		'<br />', "Site name: ", site_name,
+		'<br />', "Site type: ", type,
+		'<br />', "Visit count: ", visit_count)
+	color=NA
+	color[type=="Monitoring location"]="purple"
+	color[type=="Permit"]="orange"
+	color[type=="Gauge"]="blue"
+})
+baseMap() %>%
+	addCircleMarkers(data=map_sites, lat=~lat, lng=~long, options = pathOptions(pane = "markers"), group="Sites",
+		color = ~color, opacity=0.8, layerId=~site_id,
+		label = lapply(map_sites$lab, HTML) # crashes if only one site is selected for lapply
+	) %>%  
+	addLegend("topright", colors=c("purple","orange","blue"), labels=c("Monitoring location", "Permit", "USGS gauge")) %>%
+	fitBounds(min(map_sites$long), min(map_sites$lat), max(map_sites$long), max(map_sites$lat))
+```
+
+## Read data
+```{r}
+echo_data=readECHO_ec(p_id="UT0021741", start_date="01/01/2000", end_date="08/05/2020", print=F)
+
+wqp_sites=readWQP(type="sites", siteid=subset(qsites, type=="Monitoring location")$site_id)
+wqp_res=readWQP(type="result", siteid=subset(qsites, type=="Monitoring location")$site_id)
+wqp_data=merge(wqp_sites, wqp_res)
+
+whatNWISdata(siteNumbers="10171000", service="uv") # see also ?readNWISuv() to read high frequency values
+gauge_data=readNWISdv(siteNumbers="10171000", parameterCd="00060") %>% rename(discharge_cfs=X_00060_00003, disch_code=X_00060_00003_cd)# Parameter code 00060 = discharge in cfs
+```
+See https://cran.r-project.org/web/packages/dataRetrieval/vignettes/dataRetrieval.html#surface-water-measurement-data for more info on reading NWIS data
+
+
+## Write data to Excel (optional)
+```{r}
+writexl::write_xlsx(
+	list(
+		'echo_data' = echo_data,
+		'wqp_data' = wqp_data,
+		'gauge_data' = gauge_data
+	),
+	path = "C:\\Users\\jvander\\Documents\\R\\exported_data.xlsx", format_headers=F, col_names=T
+)
+
+
+```
+
+## Water quality summary statistics (thinking of also making a gadget option(s) for this)
+### Subset data to desired sites, dates, parameters, etc.
+```{r}
+summ_data=subset(wqp_data, 
+	MonitoringLocationIdentifier %in% c("UTAHDWQ_WQX-4990060", "UTAHDWQ_WQX-4990070", "UTAHDWQ_WQX-4990080") & 
+	CharacteristicName %in% c("Total suspended solids","Phosphate-phosphorus","Total dissolved solids","pH","Temperature, water")
+)
+
+```
+
+### Check parameters, units, fractions
+Table of params, activity types, units, & fractions.
+```{r}
+table_data=unique(data.frame(summ_data[,c("CharacteristicName","ActivityTypeCode","ResultSampleFractionText","ResultMeasure.MeasureUnitCode")]))
+knitr::kable(table_data[order(table_data$CharacteristicName),])
+```
+
+Convert units if necessary.
+Cleanup stuff (e.g. remove lab pH values).
+Assign seasons.
+
+
+### Fill non-detects
+```{r}
+knitr::kable(table(summ_data$ResultDetectionConditionText, exclude=NULL))
+summ_data=within(summ_data, {
+	ResultMeasureValue=ifelse(ResultDetectionConditionText %in% "Not Detected", DetectionQuantitationLimitMeasure.MeasureValue/2, ResultMeasureValue)
+})
+```
+
+### Summary stats (using dplyr group_by() %>% summarize() pattern)
+```{r}
+wasteload_stats=summ_data %>% 
+	group_by(MonitoringLocationIdentifier, MonitoringLocationName, SampleCollectionMethod.MethodName, CharacteristicName, ResultSampleFractionText, ResultMeasure.MeasureUnitCode) %>%
+	summarize(min=min(ResultMeasureValue, na.rm=T), median=median(ResultMeasureValue, na.rm=T), mean=mean(ResultMeasureValue, na.rm=T), max=max(ResultMeasureValue, na.rm=T), 
+		pctile20=quantile(ResultMeasureValue, 0.20, na.rm=T), pctile80=quantile(ResultMeasureValue, 0.80, na.rm=T), samp_count=dplyr::n(), .groups="drop")
+
+DT::datatable(data.frame(lapply(wasteload_stats, as.factor)),
+	selection='none', rownames=FALSE, filter="top",
+	options = list(dom = 't', paging = FALSE)
+) %>%
+DT::formatRound(columns=c("min","pctile20","median","mean","pctile80","max"), digits=2) %>%
+DT::formatRound(columns=c("samp_count"), digits=0)
+```
+
+
+## Figures???
+
+```{r}
+
+```
+
+
+
+
+
