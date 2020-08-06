@@ -1,0 +1,4 @@
+Name: Select a permit identifier
+Description: Interactively find and select a permit identifier
+Binding: selectPermit
+Interactive: true

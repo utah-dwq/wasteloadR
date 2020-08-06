@@ -186,7 +186,7 @@ findDataMod <- function(input, output, session, permits_coords){
 				'<br />', "ML name: ", MonitoringLocationName,
 				'<br />', "Site type: ", MonitoringLocationTypeName,
 				'<br />', "Visit count: ", count)
-	})		
+		})		
 		remove_modal_spinner()
 	})
 		
