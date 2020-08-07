@@ -1,0 +1,11 @@
+# Wasteload rmarkdown template
+
+R Markdown is an R package designed to turn R analyses into shareable, reproducible, interactive documents. As part of the wasteloadR package, I have started an R Markdown template document for the wasteload process. 
+R Markdown documents are designated with the ".Rmd" extension. You can get access the wasteload template via the "New File" menu in RStudio by selecting R Markdown, From Template, then Wasteload. The dialog will allow you to name and select a location for your file. 
+By starting a file, you create a new, editable rmarkdown document that you can use to run and document your analyses. As we improve the wasteloadR package, we can modify and edit the template to fit your needs. Updating the wasteloadR package will also update the template.
+
+See the [rmarkdown template guide](https://rstudio.github.io/rstudio-extensions/rmarkdown_templates.html){target="_blank"} for more information. R Markdown is a super powerful and flexible tool with uses way beyond what we have in the template so far. 
+See the [R Markdown: The Definitive Guide](https://bookdown.org/yihui/rmarkdown/){target="_blank"} for more details.
+
+
+

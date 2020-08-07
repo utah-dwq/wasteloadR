@@ -1,0 +1,81 @@
+# Relevant functions, gadgets, and apps
+Remember to install and import the *wqTools* and *wasteloadR* packages to your workspace:
+```{r, eval=F}
+library(wqTools)
+library(wasteloadR)
+```
+
+You can view a help file for any function with ?functionNameHere.
+
+## Reading data
+*wqTools* includes functions for reading water quality data from EPA ECHO and the WQP. Discharge data from USGS gauges and other data from NWIS can be read to R using functions within the USGS package, *dataRetrieval*. 
+
+
+### WQP
+readWQP() reads all WQP data types (result, sites, activities, etc). Data can be queried by siteid, assessment unit, HUC8, HUC12, and many other parameters. I frequently download two or more types then merge them together to a unified dataset. For example, grabbing the 
+result type and the sites type, then merging them together.
+
+```{r, eval=F}
+wqp_sites=readWQP(type="sites", siteid=c("UTAHDWQ_WQX-4900440","UTAHDWQ_WQX-4900460"))
+wqp_res=readWQP(type="result", siteid=c("UTAHDWQ_WQX-4900440","UTAHDWQ_WQX-4900460"))
+wqp_data=merge(wqp_sites, wqp_res)
+```
+
+
+### ECHO
+readECHO_ec() reads ECHO effluent chart data for the desired permit identifier(s), parameters, dates, etc.
+readECHO_fac() reads permit spatial coordinates by permit identifier(s) or other parameters (e.g. state code).
+
+```{r, eval=F}
+echo_data=readECHO_ec(p_id="UT0021741", start_date="01/01/2000", end_date="08/05/2020", print=F)
+fac=readECHO_fac(p_pid=c("UT0021717","UT0021741"))
+```
+
+### NWIS
+There are a number of functions in the USGS *dataRetrieval* package used to read different data types from NWIS. For our purposes, the example below shows how to read daily discharge values from a gauged stream location. 
+You can also use the whatNWISdata() function to get a summary of data available at a selected site. Note that the column names comb back from NWIS with USGS parameter codes. I typically include a rename step whenever I query NWIS data using the rename() function from the *dplyr* package.
+See the [dataRetrieval project page](https://cran.r-project.org/web/packages/dataRetrieval/vignettes/dataRetrieval.html){target="_blank"} for more information on reading NWIS data.
+
+```{r, eval=F}
+whatNWISdata(siteNumbers="10171000", service="uv")
+gauge_data=readNWISdv(siteNumbers="10171000", parameterCd="00060") %>% 
+	rename(discharge_cfs=X_00060_00003, disch_code=X_00060_00003_cd)
+```
+Parameter code 00060 = discharge in cfs. see also ?readNWISuv() to read high frequency values
+
+
+## Shiny gadgets
+Shiny gadgets are just small Shiny apps designed to be run locally as part of an analytical workflow. These are intended to simplify repeated, complex tasks by making them interactive. Gadgets can be accessed in RStudio via the addins menu. You can 
+also call them just like any other function in your console. In some cases it is more useful to run them via the command line and assign the output to an object for use later on in your analysis. See code examples below.
+
+```{r, echo = FALSE}
+knitr::include_graphics("images\\addins.PNG")
+```
+
+### selectPermit()
+Shiny gadget designed to identify a permit ID and location. This is mostly useful if you don't already know or can't remember your permit ID (like me) or want to see the coordinates of the permit. Note that these are the coordinates associated with permit in ECHO, not 
+necessarily the location of the actual discharge outlet. The function simply returns an ECHO permit identifier that can be used to query ECHO effluent chart or facility location data.
+
+```{r, eval=F}
+pid=selectPermit()
+```
+
+### findSites()
+Shiny gadget to identify and select site identifiers for a desired spatial area. This incoroporates site queries for permit locations from ECHO, water quality monitoring locations from WQP, and USGS gauge locations from NWIS. Site identifiers 
+can be used in readWQP, readECHO, and readNWIS functions.
+
+```{r, eval=F}
+qsites=findSites()
+```
+
+## wasteloadR dashboard
+Currently revamping the dashboard to embed within the wasteloadR package for local runs and to add USGS gauge query capabalities.
+
+
+
+
+
+
+
+
+
