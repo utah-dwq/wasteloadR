@@ -66,8 +66,9 @@ wqp_sites=readWQP(type="sites", siteid=subset(qsites, type=="Monitoring location
 wqp_res=readWQP(type="result", siteid=subset(qsites, type=="Monitoring location")$site_id)
 wqp_data=merge(wqp_sites, wqp_res)
 
-whatNWISdata(siteNumbers="10171000", service="uv") # see also ?readNWISuv() to read high frequency values
-gauge_data=readNWISdv(siteNumbers="10171000", parameterCd="00060") %>% rename(discharge_cfs=X_00060_00003, disch_code=X_00060_00003_cd)# Parameter code 00060 = discharge in cfs
+
+whatNWISdata(siteNumbers="10171000", service="uv")
+gauge_data=readNWISdv(siteNumbers="10171000", parameterCd="00060") %>% rename(discharge_cfs=X_00060_00003, disch_code=X_00060_00003_cd)# Parameter code 00060 = discharge in cfs. see also ?readNWISuv() to read high frequency values
 ```
 See https://cran.r-project.org/web/packages/dataRetrieval/vignettes/dataRetrieval.html#surface-water-measurement-data for more info on reading NWIS data
 
@@ -131,6 +132,10 @@ DT::formatRound(columns=c("min","pctile20","median","mean","pctile80","max"), di
 DT::formatRound(columns=c("samp_count"), digits=0)
 ```
 
+## Low flow statistics (7Q10)
+```{r}
+
+```
 
 ## Figures???
 
