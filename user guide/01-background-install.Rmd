@@ -49,8 +49,8 @@ From [Quick-R](https://www.statmethods.net/interface/packages.html){target="_bla
 The directory where packages are stored is called the library. R comes with a standard set of packages. Others are available for download and installation. Once installed, they have to be loaded into the session to be used."  
 
 ## Relevant packages
-Wasteload relevant functions are contained in two package: *wqTools* & *wasteloadr*. Package wqTools contains a set of useful functions that are commonly used and re-used in water quality analyses 
-(ex. converting units, loading calculations, and downloading data). *wasteloadr* contains the wasteload specific functions, gadgets, and applications.  
+Wasteload relevant functions are contained in two package: *wqTools* & *wasteloadR*. Package wqTools contains a set of useful functions that are commonly used and re-used in water quality analyses 
+(ex. converting units, loading calculations, and downloading data). *wasteloadR* contains the wasteload specific functions, gadgets, and applications.  
 These packages live on the [Utah Division of Water Quality's GitHub](https://github.com/utah-dwq){target="_blank"}. 
 GitHub is an online platform for storing, developing, and sharing a wide variety of computer languages. DWQ's GitHub page contains a number of repositories of R code used to perform water quality assessments and explore water quality data. 
 
@@ -77,7 +77,7 @@ To install packages from GitHub, use the *devtools* function install_github():
 install_github("utah-dwq/wqTools", upgrade='never')
 ```
 ```{r, eval=FALSE}
-install_github("utah-dwq/wasteloadr", upgrade='never')
+install_github("utah-dwq/wasteloadR", upgrade='never')
 ```
 
 *Note:*  
