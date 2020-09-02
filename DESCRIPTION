@@ -22,3 +22,5 @@ Imports:
     leaflet,
     miniUI,
     shinyWidgets
+Remotes:
+	utah-dwq/wqTools
