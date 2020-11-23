@@ -21,6 +21,11 @@ Imports:
     wqTools,
     leaflet,
     miniUI,
-    shinyWidgets
+    shinyWidgets,
+	roll,
+	plyr,
+	dplyr,
+	lubridate,
+	dataRetrieval
 Remotes:
 	utah-dwq/wqTools
