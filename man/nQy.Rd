@@ -38,6 +38,7 @@ Generate low flow statistics (nQy) for wasteloads
 \examples{
 # Basic usage
 ## Get data
+library(dplyr)
 gauge_data=dataRetrieval::readNWISdv(siteNumbers="10171000", startDate="2000-01-01", parameterCd="00060") \%>\% dplyr::rename(discharge_cfs=X_00060_00003, disch_code=X_00060_00003_cd)# Parameter code 00060 = discharge in cfs. see also ?readNWISuv() to read high frequency values
 
 ## Run the function
@@ -49,11 +50,10 @@ JR_1700S_min_ann_Q=nQy(data=gauge_data, n=7, y=10, date_col="Date", q_col="disch
 JR_1700S_min_ann_Q
 
 ## Other nQy types
-my_10Q5=nQy(data=gauge_data, n=30, y=5, date_col="Date", q_col="discharge_cfs")
-my_30Q5
+JR1700S_30Q2=nQy(data=gauge_data, n=30, y=5, date_col="Date", q_col="discharge_cfs")
+JR1700S_30Q2
 
 # Using plyr::ddply to perform advanced analyses (multiple sites, seasonal, etc.)
-library(plyr)
 
 ## Multiple sites
 gauge_data=dataRetrieval::readNWISdv(siteNumbers=c("10171000","10168000","10170500"), startDate="2000-01-01", parameterCd="00060") \%>\% dplyr::rename(discharge_cfs=X_00060_00003, disch_code=X_00060_00003_cd)# Parameter code 00060 = discharge in cfs. see also ?readNWISuv() to read high frequency values
