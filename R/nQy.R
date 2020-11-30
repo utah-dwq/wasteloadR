@@ -16,6 +16,7 @@
 #' ## Get data
 #' library(dplyr)
 #' gauge_data=dataRetrieval::readNWISdv(siteNumbers="10171000", startDate="2000-01-01", parameterCd="00060") %>% dplyr::rename(discharge_cfs=X_00060_00003, disch_code=X_00060_00003_cd)# Parameter code 00060 = discharge in cfs. see also ?readNWISuv() to read high frequency values
+#' ### Also try wqTools::findSites() to find other gauge locations.
 #' 
 #' ## Run the function
 #' JR_1700S_7Q10=nQy(data=gauge_data, n=7, y=10, date_col="Date", q_col="discharge_cfs")
