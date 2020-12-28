@@ -21,7 +21,11 @@ findDataModUI <- function(id){
 					
 					## Find permit
 					shinyBS::bsCollapsePanel(list(icon('plus-circle'),"Find effluent data"), value=1,
-						uiOutput(ns("permit_ui"))
+						uiOutput(ns("permit_ui")), 
+						fluidRow(
+							column(6, actionButton(ns('read_ec'), 'Read effluent data', style='color: #fff; background-color: #337ab7; border-color: #2e6da4%', icon=icon('file-import'), width="100%")),
+							column(6, uiOutput(ns("dwnloadec_button")))
+						)
 					),
 					
 					## Find WQ sites
@@ -83,8 +87,7 @@ findDataMod <- function(input, output, session, permits_coords){
 			shinyWidgets::pickerInput(ns('pid_picker'), 'Permit ID:', choices=append(" ",paste(permits_coords$locationID, permits_coords$locationName)), selected = " ",
 				options = list(`live-search` = TRUE)
 			),
-			dateRangeInput(ns('ec_date_range'), 'Date range:', end=Sys.Date(), start=Sys.Date()-365*10, width="100%"),
-			actionButton(ns('read_ec'), 'Read effluent data', style='color: #fff; background-color: #337ab7; border-color: #2e6da4%', icon=icon('cloud-download-alt'))
+			dateRangeInput(ns('ec_date_range'), 'Date range:', end=Sys.Date(), start=Sys.Date()-365*10, width="100%")
 		)
 	})	
 
@@ -124,6 +127,25 @@ findDataMod <- function(input, output, session, permits_coords){
 			remove_modal_spinner()
 		}
 	})
+
+	### Download EC data actionButton
+	output$dwnloadec_button=renderUI({
+		req(ec_data())
+		ns <- session$ns
+		downloadButton(ns('dwnloadec'), 'Download effluent data', style='color: #fff; background-color: #337ab7; border-color: #2e6da4%', style = "width:100%;")
+	})
+
+
+	### Download EC data
+	output$dwnloadec <- downloadHandler(
+		filename=paste0('effluent-export-', Sys.Date(),'.xlsx'),
+		content = function(file) {writexl::write_xlsx(
+			list(
+				'effluent-data'=ec_data()
+			),
+			path = file, format_headers=F, col_names=T)}
+	)
+
 
 
 	# Find water quality data
