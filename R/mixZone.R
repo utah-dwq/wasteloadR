@@ -9,7 +9,7 @@
 #' @param mixing_coef
 #
 
-#' @return Either a numeric value of nQy or a dataframe of minimum annual n-day average discharge values.
+#' @return TBD, table, list, etc
 
 #' @import dplyr
 #' @importFrom lubridate year
