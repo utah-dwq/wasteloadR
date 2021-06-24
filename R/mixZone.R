@@ -13,7 +13,6 @@
 
 #' @import dplyr
 #' @importFrom lubridate year
-#' @importFrom roll roll_mean
 
 #' @examples
 
