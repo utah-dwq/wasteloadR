@@ -1,4 +1,6 @@
 #' Calculate mixing zone statistics for wasteloads
+#' Function returns table with distance from discharge, travel time and plume width
+#' Function returns plume width at 2500 feet distance from discharge and 15 minutes of travel time, expressed as % of stream width
  
 #' @param streamQcfs
 #' @param effluentQcfs
@@ -7,6 +9,8 @@
 #' @param depth_ft
 #' @param slope_ftft
 #' @param mixing_coef
+#' @param max_dist_ft
+#' @param dist_int_ft
 #
 
 #' @return TBD, table, list, etc
@@ -41,6 +45,7 @@ mixZone = function(streamQcfs, effluentQcfs, dist_ft, width_ft, depth_ft, slope_
 	
 	# plume width
 	## specify target distance as a function input? Or return widths at multiple distances? Or both (i.e. supply a vector of target lengths)?
+	## return plume width at multiple distances - user specifies maximum distance and distance interval
 	plume_width_ft=(((2*x/W+1)^2)*2*PI()*D1*distance/D)^0.5
 	
 	# theta 
