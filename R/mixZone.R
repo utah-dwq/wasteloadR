@@ -23,13 +23,35 @@
 #' @export
 mixZone = function(streamQcfs, effluentQcfs, dist_ft, width_ft, depth_ft, slope, mixing_coef=0.6, max_dist_ft=2500, dist_int_ft=500){
 	# need variable definitions - reformat equations to use function parameter names (or vice-versa)
+		# streamQcfs: upstream seasonal 7Q10 critical Q (with wasteloadR tool pick USGS, DWQ, other sites 20-50 mi upstream using NHD+ reaches)
+			# daily USGS for 7Q10, need sites with n>=32, closest to furthest
+			# if not use (ie: DWQ) with n>=32
+			# if not daily with n>=32, critical flow is 95th% not 80th%
+		# effluentQcfs: seasonal average effluent discharge or annual (with note) if not seasonal
+			# from facility DMR or ICIS like in wasteloadR tool
+			# maybe a user picker for time range of data (ie: 5 yr, 10 yr, 20 yr) but typically 10 yr
+		# dist_ft: the xlsx code used an iterative 100ft distance to 5000ft and then a vlookup to pull data. We can just code the distance required as below.
+		# width_ft: the stream channel width at effluent discharge point
+			# can be user supplied, from NHD+ reach info, USGS stream characteriz, or other
+		# depth_ft: the average stream channel depth at effluent discharge point
+			# can be user supplied, from NHD+ reach info, USGS stream characteriz, DEM adjacent slope estimate, or other
+		# slope: the average stream channel slope around the effluent discharge point (ft/ft)
+			# can be user supplied, from NHD+ reach info
+			# with NHD+, get elevations 1, 2, and 3 mi up and downstream
+			# then calc ave river elev drop (ft/mi) across the distances
+			# if elev drop < 6.2 ft/mi then natural, otherwise channelized
+			# calculate stream sinuosity from (reach distance : linear distance)
 	
 	# Combined Q (upstream & discharge)
 	Q=streamQcfs+effluentQcfs
 	
 	# mannings_n #pull out to separate function? Or is automatic calculation here preferred?
 	## defs: n=, A=, R=, S=
-	mannings_n=(1.49/n)*A*R^(2/3)*S^(1/2)
+		# n: stream channel mannings coefficient (typically 0.030 but variable); mannings_n
+		# A: stream channel area (A = width_ft*depth_ft); area_ft2
+		# R: stream channel hydraulic radius (trapezoidal, rectangular, other?) (R = 2*depth_ft+width_ft); hyd_rad_ft
+		# S: (or slope above) the average stream channel slope around the effluent discharge point; slope
+	Q=(1.49/n)*A*R^(2/3)*S^(1/2) # rearrange to calculate n [mannings_n=(1.49/Q)*A*R^(2/3)*S^(1/2)]
 	
 	# Check reasonable-ness of mannings_n (expected range = x-y)
 	
