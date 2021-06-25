@@ -27,7 +27,7 @@ mixZone = function(streamQcfs, effluentQcfs, dist_ft, width_ft, depth_ft, slope,
 	# Combined Q (upstream & discharge)
 	Q=streamQcfs+effluentQcfs
 	
-	# mannings_n
+	# mannings_n #pull out to separate function? Or is automatic calculation here preferred?
 	## defs: n=, A=, R=, S=
 	mannings_n=(1.49/n)*A*R^(2/3)*S^(1/2)
 	
