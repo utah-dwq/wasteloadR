@@ -2,15 +2,15 @@
 #' Function returns table with distance from discharge, travel time and plume width
 #' Function returns plume width at 2500 feet distance from discharge and 15 minutes of travel time, expressed as % of stream width
  
-#' @param streamQcfs
-#' @param effluentQcfs
-#' @param dist_ft
-#' @param width_ft
-#' @param depth_ft
-#' @param slope_ftft
-#' @param mixing_coef
-#' @param max_dist_ft
-#' @param dist_int_ft
+#' @param streamQcfs Upstream discharge in CFS
+#' @param effluentQcfs Effluent discharge in CFS
+#' @param dist_ft Discharge distance from shore in feet.
+#' @param width_ft Stream channel width in feet
+#' @param depth_ft Stream channel depth in feet
+#' @param slope Stream channel slope, unitless
+#' @param mixing_coef Mixing coefficient estimate. Default is 0.6.
+#' @param max_dist_ft Maximum distance to calculate plume width in feet. Default 2500.
+#' @param dist_int_ft Interval distance for plume width calculations in feet. Deafult 500. Plume widths are calculated from dist_int_ft to max_dist_ft with an interval of dist_int_ft.
 #
 
 #' @return TBD, table, list, etc
@@ -21,7 +21,7 @@
 #' @examples
 
 #' @export
-mixZone = function(streamQcfs, effluentQcfs, dist_ft, width_ft, depth_ft, slope_ftft, mixing_coef=0.6){
+mixZone = function(streamQcfs, effluentQcfs, dist_ft, width_ft, depth_ft, slope, mixing_coef=0.6, max_dist_ft=2500, dist_int_ft=500){
 	# need variable definitions - reformat equations to use function parameter names (or vice-versa)
 	
 	# Combined Q (upstream & discharge)
@@ -43,10 +43,10 @@ mixZone = function(streamQcfs, effluentQcfs, dist_ft, width_ft, depth_ft, slope_
 	# dispersion coefficient
 	D1 = Sqrt(G*D*S)*D*C1
 	
-	# plume width
-	## specify target distance as a function input? Or return widths at multiple distances? Or both (i.e. supply a vector of target lengths)?
+	# plume width (ft & %)
 	## return plume width at multiple distances - user specifies maximum distance and distance interval
-	plume_width_ft=(((2*x/W+1)^2)*2*PI()*D1*distance/D)^0.5
+	target_distances=seq(dist_int_ft, max_dist_ft, by=dist_int_ft)
+	plume_width_ft=(((2*x/W+1)^2)*2*PI()*D1*distance/D)^0.5 #apply equation across all target distances.
 	
 	# theta 
 	if(distance < 0, then 0)
