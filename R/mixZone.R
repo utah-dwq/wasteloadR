@@ -22,7 +22,6 @@
 
 #' @export
 mixZone = function(streamQcfs, effluentQcfs, dist_ft, width_ft, depth_ft, slope, mixing_coef=0.6, max_dist_ft=2500, dist_int_ft=500){
-	# need variable definitions - reformat equations to use function parameter names (or vice-versa)
 		# streamQcfs: upstream seasonal 7Q10 critical Q (with wasteloadR tool pick USGS, DWQ, other sites 20-50 mi upstream using NHD+ reaches)
 			# daily USGS for 7Q10, need sites with n>=32, closest to furthest
 			# if not use (ie: DWQ) with n>=32
@@ -43,7 +42,7 @@ mixZone = function(streamQcfs, effluentQcfs, dist_ft, width_ft, depth_ft, slope,
 			# calculate stream sinuosity from (reach distance : linear distance)
 	
 	# Combined Q (upstream & discharge)
-	Q=streamQcfs+effluentQcfs
+	comb_q=streamQcfs+effluentQcfs
 	
 	# mannings_n #pull out to separate function? Or is automatic calculation here preferred?
 	## defs: n=, A=, R=, S=
@@ -51,16 +50,23 @@ mixZone = function(streamQcfs, effluentQcfs, dist_ft, width_ft, depth_ft, slope,
 		# A: stream channel area (A = width_ft*depth_ft); area_ft2
 		# R: stream channel hydraulic radius (trapezoidal, rectangular, other?) (R = 2*depth_ft+width_ft); hyd_rad_ft
 		# S: (or slope above) the average stream channel slope around the effluent discharge point; slope
-	Q=(1.49/n)*A*R^(2/3)*S^(1/2) # rearrange to calculate n [mannings_n=(1.49/Q)*A*R^(2/3)*S^(1/2)]
+	#Q=(1.49/n)*A*R^(2/3)*S^(1/2) # rearrange to calculate n [mannings_n=(1.49/Q)*A*R^(2/3)*S^(1/2)]
+	A = width_ft*depth_ft
+	R = 2*depth_ft+width_ft
+	mannings_n=(1.49/comb_q)*A*R^(2/3)*slope^(1/2)]
 	
-	# Check reasonable-ness of mannings_n (expected range = x-y)
+	# Check reasonable-ness of mannings_n (expected range = 0.018-0.060)
+	if(mannings_n<0.018){warning("Manning's n coefficient <0.018")}
+	if(mannings_n>0.060){warning("Manning's n coefficient >0.060")}
 	
-	# velocity
-	## defs: Q=, W=, D
-	(V = Q/(W*D))
+	
+	# velocity (ft/sec)
+	## defs: Q=combined discharge (comb_q), W=channel width (width_ft), D=channel depth (depth_ft)
+	#(V = Q/(W*D))
+	velocity_ftsec=comb_q/(width_ft*depth_ft)
 	
 	# distance at 15 min
-	dist_15min=V*t
+	dist_15min=velocity_ftsec*15*60
 	
 	# dispersion coefficient
 	D1 = Sqrt(G*D*S)*D*C1
