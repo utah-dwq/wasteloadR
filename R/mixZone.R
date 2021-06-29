@@ -62,31 +62,34 @@ mixZone = function(streamQcfs, effluentQcfs, dist_ft, width_ft, depth_ft, slope,
 	
 	# velocity (ft/sec)
 	## defs: Q=combined discharge (comb_q), W=channel width (width_ft), D=channel depth (depth_ft)
-	#(V = Q/(W*D))
+	## (V = Q/(W*D))
 	velocity_ftsec=comb_q/(width_ft*depth_ft)
 	
 	# distance at 15 min
 	dist_15min=velocity_ftsec*15*60
 	
 	# dispersion coefficient
-	D1 = Sqrt(G*D*S)*D*C1
+	## defs: G=, D=, S=, D=, C1=
+	## D1 = Sqrt(G*D*S)*D*C1
+	dispersion=Sqrt(G*D*S)*D*C1
 	
 	# plume width (ft & %)
 	## return plume width at multiple distances - user specifies maximum distance and distance interval
+	## defs: x=, W=, D1=dispersion coefficient, distance=, D=
 	target_distances=seq(dist_int_ft, max_dist_ft, by=dist_int_ft)
 	plume_width_ft=(((2*x/W+1)^2)*2*PI()*D1*distance/D)^0.5 #apply equation across all target distances.
 	
 	# theta 
-	if(distance < 0, then 0)
-	if(((plume width/W*(Qup+Qeff))-Qeff)/Qup > 0,then this calculation)
-	else 0
+	## if(distance < 0, then 0)
+	## if(((plume width/W*(Qup+Qeff))-Qeff)/Qup > 0,then this calculation)
+	## else 0
 
 	# chronic flow
-	Q combined * (plume width % of river at 2500 ft)
+	## Q combined * (plume width % of river at 2500 ft)
 	
 	# acute flow
-	if (plume width % of river at 15 min) < 0.5, then Qcombined * (plume width % of river at 15 min)
-	else (chronic flow * 0.5)
+	## if (plume width % of river at 15 min) < 0.5, then Qcombined * (plume width % of river at 15 min)
+	## else (chronic flow * 0.5)
 	
 	
 	# Gather, return, & print results
