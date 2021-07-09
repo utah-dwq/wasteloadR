@@ -68,8 +68,12 @@ mixZone = function(streamQcfs, effluentQcfs, dist_ft, width_ft, depth_ft, slope,
 	# distance at 15 min
 	dist_15min=velocity_ftsec*15*60
 	
-	# dispersion coefficient
+	# dispersion coefficient (need to check on this)
 	## defs: G=, D=, S=, D=, C1=
+		# G: the gravitational acceleration 
+		# D: the stream channel width; width_ft
+		# S: the average stream channel slope around the effluent discharge point; S or slope
+		# C1: the mixing coefficient (typically 0.6 but should vary); mix_coeff
 	## D1 = Sqrt(G*D*S)*D*C1
 	dispersion=Sqrt(G*D*S)*D*C1
 	
