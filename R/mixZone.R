@@ -101,40 +101,49 @@ mixZone = function(streamQcfs, effluentQcfs, dist_ft, width_ft, depth_ft, slope,
 	else
 		longDispersionCoeff=0.011*((velocity_ftsec^2 * width_ft^2) / (depth_ft * shearVel) # (Fisher et al., 1979)
 	
-	# plume width (ft & %)
+	# plume width (CHRONIC at 2500 ft & ACUTE at 15 min)
 	## return plume width at multiple distances - user specifies maximum distance and distance interval
 		## Jake, we only need the 2500 ft distance and 15 min period. No need to do multiple distances
-	## defs: x=, W=, D1, X2=, D
+	## defs: x=, W=, D1, X1=, t1, D
 		# x: the distance of effluent discharge from shore in ft (user provided); xShore_ft
 		# W: the average stream channel width at effluent discharge point; width_ft
 		# D1: the lateral dispersion coefficient inf ft2/s; latDispersionCoeff
-		# X2: the downstream plume distance, chronic calculated at 2500 ft; xDownstream_ft
+		# X1: the downstream plume distance, chronic calculated at 2500 ft; xDownChronic_ft
+		# t1: the downstream plume travel time, acute calculated at 15 min; tDownAcute_s
 		# U: the average downstream velocity (ft/s); velocity_ftsec
 	target_distances=seq(dist_int_ft, max_dist_ft, by=dist_int_ft) # if want sequence then the following. Maybe start at -3 intervals
 		# dist_int_ft: the downstream distance interval for the sequence in ft; 5
 		# max_dist_ft: the maximum downstream distance for the sequence in ft; 5280
-	xDownstream_ft=2500
-	plume_width_ft=(((2*xShore_ft/width_ft+1)^2)*PI()*latDispersionCoeff*(xDownstream_ft/velocity_ftsec))^0.5 # can apply equation across all target distances.
-	
-	# Chronic theta or plume width as percent of river at 2500 ft
+	xDownChronic_ft=2500
+	tDownAcute_s=15*60 # in seconds
+	plume_widthChronic_ft=(((2*xShore_ft/width_ft+1)^2)*PI()*latDispersionCoeff*(xDownChronic_ft/velocity_ftsec))^0.5 # can apply equation across all target distances.
+	plume_widthAcute_ft=(((2*xShore_ft/width_ft+1)^2)*PI()*latDispersionCoeff*((/velocity_ftsec*tDownAcute_s))^0.5 # can apply equation across all target distances.
+					   
+	# Chronic theta or plume width as percent of river at 2500 ft and 15 min
 	## defs: x=, W=, D1, X2=, D
-		# X2: the downstream plume distance, chronic calculated at 2500 ft; xDownstream_ft
+		# X1: the downstream plume distance, chronic calculated at 2500 ft; xDownChronic_ft
 		# plume width: the plume width across the stream at chronic distance of effluent discharge (2500 ft) in ft; plume_width_ft
 		# W: the average stream channel width at effluent discharge point; width_ft
 		# Qup: the upstream seasonal 7Q10 critical Q ft3/s; streamQcfs
 		# Qeff: the seasonal average effluent discharge or annual (with note) if not seasonal in ft3/s; effluentQcfs
-	distPlumePercent=(((plume_width_ft/width_ft*(streamQcfs+effluentQcfs))-effluentQcfs)/streamQcfs)*100 # in percentage
-	if xDownstream_ft < 0, then chronicPlumePercent=0
+	distPlumePercChronic=(((plume_widthChronic_ft/width_ft*(streamQcfs+effluentQcfs))-effluentQcfs)/streamQcfs)*100 # in percentage
+	if xDownChronic_ft < 0, then chronicPlumePercent=0
 	else
-		if distPlumePercent > 0, then chronicPlumePercent=distPlumePercent
+		if distPlumePercChronic > 0, then chronicPlumePercent=distPlumePercChronic
 		else chronicPlumePercent=0
+		
+	distPlumePercAcute=(((plume_widthAcute_ft/width_ft*(streamQcfs+effluentQcfs))-effluentQcfs)/streamQcfs)*100 # in percentage
+	if tDownAcute_s < 0, then acutePlumePercent=0
+	else
+		if distPlumePercAcute > 0, then acutePlumePercent=distPlumePercAcute
+		else acutePlumePercent=0	
 
 	# chronic flow limit
 	chronicQLimit=comb_q*chronicPlumePercent
-	
+			     
 	# acute flow limit
-	## if (plume width % of river at 15 min) < 0.5, then Qcombined * (plume width % of river at 15 min)
-	## else (chronic flow * 0.5)
+	if distPlumePercAcute < 0.5, then comb_q * distPlumePercAcute
+	else chronicQLimit * 0.5
 	
 	
 	# Gather, return, & print results
