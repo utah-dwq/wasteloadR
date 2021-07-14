@@ -51,12 +51,14 @@ mixZone = function(streamQcfs, effluentQcfs, dist_ft, width_ft, depth_ft, slope,
 		# A: stream channel area (A = width_ft*depth_ft); area_ft2
 		# R: stream channel hydraulic radius (trapezoidal, rectangular, other?) (R = 2*depth_ft+width_ft); hyd_rad_ft
 		# S: (or slope above) the average stream channel slope around the effluent discharge point; slope
-	#Q=(1.49/n)*A*R^(2/3)*S^(1/2) # rearrange to calculate n [mannings_n=(1.49/Q)*A*R^(2/3)*S^(1/2)]
-	A = width_ft*depth_ft
-	R = 2*depth_ft+width_ft
-	mannings_n=(1.49/comb_q)*A*R^(2/3)*slope^(1/2)]
+		# Q=(1.49/n)*A*R^(2/3)*S^(1/2) # rearrange to calculate n [mannings_n=(1.49/Q)*A*R^(2/3)*S^(1/2)]
+	area_ft2 = width_ft*depth_ft
+	hyd_rad_ft = 2*depth_ft+width_ft
+	mannings_n=(1.486/comb_q)*area_ft2*hyd_rad_ft^(2/3)*slope^(1/2)]
 	
 	# Check reasonable-ness of mannings_n (expected range = 0.018-0.060)
+		# maybe reference table of mannings n values for user (http://www.fsl.orst.edu/geowater/FX3/help/8_Hydraulic_Reference/Mannings_n_Tables.htm or
+		# https://pubs.usgs.gov/wsp/2339/report.pdf)
 	if(mannings_n<0.018){warning("Manning's n coefficient <0.018")}
 	if(mannings_n>0.060){warning("Manning's n coefficient >0.060")}
 	
@@ -74,7 +76,7 @@ mixZone = function(streamQcfs, effluentQcfs, dist_ft, width_ft, depth_ft, slope,
 		# G: the gravitational acceleration (9.81 m/s2 or 32.174 ft.s2)
 		# D: the average stream channel depth; depth_ft
 		# S: the average stream channel slope around the effluent discharge point; S or slope
-		# C1: the mixing coefficient (default value= 0.6. Varies with channel irregularity; straight channel uniform flow=0.3, 
+		# C1: the mixing coefficient (default value= 0.6 (0.3 - 0.9). Varies with channel irregularity; straight channel uniform flow=0.3, 
 		#     curved channel, irreg flow, sidewall interference =1.0, significant meandering can exceed 1.0); mix_coeff
 		# U*: shear velocity (ft/s)
 		# Q_location: stream effluent discharge location, where side = 1, center = 2
@@ -101,19 +103,36 @@ mixZone = function(streamQcfs, effluentQcfs, dist_ft, width_ft, depth_ft, slope,
 	
 	# plume width (ft & %)
 	## return plume width at multiple distances - user specifies maximum distance and distance interval
-	## defs: x=, W=, D1=dispersion coefficient, distance=, D=
-	target_distances=seq(dist_int_ft, max_dist_ft, by=dist_int_ft)
-	plume_width_ft=(((2*x/W+1)^2)*2*PI()*D1*distance/D)^0.5 #apply equation across all target distances.
+		## Jake, we only need the 2500 ft distance and 15 min period. No need to do multiple distances
+	## defs: x=, W=, D1, X2=, D
+		# x: the distance of effluent discharge from shore in ft (user provided); xShore_ft
+		# W: the average stream channel width at effluent discharge point; width_ft
+		# D1: the lateral dispersion coefficient inf ft2/s; latDispersionCoeff
+		# X2: the downstream plume distance, chronic calculated at 2500 ft; xDownstream_ft
+		# U: the average downstream velocity (ft/s); velocity_ftsec
+	target_distances=seq(dist_int_ft, max_dist_ft, by=dist_int_ft) # if want sequence then the following. Maybe start at -3 intervals
+		# dist_int_ft: the downstream distance interval for the sequence in ft; 5
+		# max_dist_ft: the maximum downstream distance for the sequence in ft; 5280
+	xDownstream_ft=2500
+	plume_width_ft=(((2*xShore_ft/width_ft+1)^2)*PI()*latDispersionCoeff*(xDownstream_ft/velocity_ftsec))^0.5 # can apply equation across all target distances.
 	
-	# theta 
-	## if(distance < 0, then 0)
-	## if(((plume width/W*(Qup+Qeff))-Qeff)/Qup > 0,then this calculation)
-	## else 0
+	# Chronic theta or plume width as percent of river at 2500 ft
+	## defs: x=, W=, D1, X2=, D
+		# X2: the downstream plume distance, chronic calculated at 2500 ft; xDownstream_ft
+		# plume width: the plume width across the stream at chronic distance of effluent discharge (2500 ft) in ft; plume_width_ft
+		# W: the average stream channel width at effluent discharge point; width_ft
+		# Qup: the upstream seasonal 7Q10 critical Q ft3/s; streamQcfs
+		# Qeff: the seasonal average effluent discharge or annual (with note) if not seasonal in ft3/s; effluentQcfs
+	distPlumePercent=(((plume_width_ft/width_ft*(streamQcfs+effluentQcfs))-effluentQcfs)/streamQcfs)*100 # in percentage
+	if xDownstream_ft < 0, then chronicPlumePercent=0
+	else
+		if distPlumePercent > 0, then chronicPlumePercent=distPlumePercent
+		else chronicPlumePercent=0
 
-	# chronic flow
-	## Q combined * (plume width % of river at 2500 ft)
+	# chronic flow limit
+	chronicQLimit=comb_q*chronicPlumePercent
 	
-	# acute flow
+	# acute flow limit
 	## if (plume width % of river at 15 min) < 0.5, then Qcombined * (plume width % of river at 15 min)
 	## else (chronic flow * 0.5)
 	
