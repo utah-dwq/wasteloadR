@@ -1,4 +1,5 @@
 #' Calculate mixing zone statistics for wasteloads
+#' Follow STREAMIX I procedure EPA Region 8, Denver, CO, Water Mgmt Div, Dec 1994
 #' Function returns table with distance from discharge, travel time and plume width
 #' Function returns plume width at 2500 feet distance from discharge and 15 minutes of travel time, expressed as % of stream width
  
@@ -68,14 +69,35 @@ mixZone = function(streamQcfs, effluentQcfs, dist_ft, width_ft, depth_ft, slope,
 	# distance at 15 min
 	dist_15min=velocity_ftsec*15*60
 	
-	# dispersion coefficient (need to check on this)
+	# longitudinal and lateral dispersion coefficients (Chapra. 1997. Surface Water Quality Modeling. Chap 14.4)
 	## defs: G=, D=, S=, D=, C1=
-		# G: the gravitational acceleration 
-		# D: the stream channel width; width_ft
+		# G: the gravitational acceleration (9.81 m/s2 or 32.174 ft.s2)
+		# D: the average stream channel depth; depth_ft
 		# S: the average stream channel slope around the effluent discharge point; S or slope
-		# C1: the mixing coefficient (typically 0.6 but should vary); mix_coeff
-	## D1 = Sqrt(G*D*S)*D*C1
-	dispersion=Sqrt(G*D*S)*D*C1
+		# C1: the mixing coefficient (default value= 0.6. Varies with channel irregularity; straight channel uniform flow=0.3, 
+		#     curved channel, irreg flow, sidewall interference =1.0, significant meandering can exceed 1.0); mix_coeff
+		# U*: shear velocity (ft/s)
+		# Q_location: stream effluent discharge location, where side = 1, center = 2
+	## shear velocity (ft/s)
+	shearVel = Sqrt(G*depth_ft*slope)
+	
+	## Froude number (-)
+	froudeNum = velocity_ftsec / Sqrt(G*depth_ft)
+	
+	## lateral dispersion coefficient (ft2/s)
+	mix_coeff=0.6
+	latDispersionCoeff=shearVel*depth_ft*mix_coeff
+	
+	if Q_location = 1
+		mixLength=0.4*velocity_ftsec*(width_ft^2 / latDispersionCoeff)
+	if Q_location = 2
+		mixLength=0.1*velocity_ftsec*(width_ft^2 / latDispersionCoeff)
+	
+	## longitudinal dispersion coefficient (ft2/s)
+	if froudeNum <0.5, then
+		longDispersionCoeff=0.058*comb_q / (slope * width_ft) # (McQuivey and Keefer, 1974)
+	else
+		longDispersionCoeff=0.011*((velocity_ftsec^2 * width_ft^2) / (depth_ft * shearVel) # (Fisher et al., 1979)
 	
 	# plume width (ft & %)
 	## return plume width at multiple distances - user specifies maximum distance and distance interval
