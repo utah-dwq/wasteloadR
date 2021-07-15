@@ -19,15 +19,16 @@
 #' @examples
 
 #' @export
+# Use data in the "Moab_WWTP_WLA_2021.xlsm" file in worksheet "hydraulics". Not the same as worksheet "Stream-Mix", which may be problematic
 mixZone = function(streamQcfs, effluentQcfs, shore_dist_ft, width_ft, depth_ft, slope, mix_coeff=0.6, Q_location="side"){
-		#streamQcfs=250
-		#effluentQcfs=75
-		#shore_dist_ft=5
-		#width_ft=20
-		#depth_ft=3
-		#slope=0.2
-		#mix_coeff=0.6
-		#Q_location="side"
+		streamQcfs=736
+		effluentQcfs=2.3
+		shore_dist_ft=15
+		width_ft=300
+		depth_ft=1.8
+		slope=0.0010
+		mix_coeff=0.6
+		Q_location="side"
 		
 		# streamQcfs: upstream seasonal 7Q10 critical Q (with wasteloadR tool pick USGS, DWQ, other sites 20-50 mi upstream using NHD+ reaches)
 			# daily USGS for 7Q10, need sites with n>=32, closest to furthest
