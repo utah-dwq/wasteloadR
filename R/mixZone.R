@@ -12,15 +12,15 @@
 #' @param mix_coeff Mixing coefficient estimate. Default is 0.6.
 #' @param Q_location Discharge channel location. One of "side" (default) or "center".
 
-#
-
 #' @return TBD, table, list, etc
 
 #' @examples
+#' mixing_zone_stats=mixZone(streamQcfs=736, effluentQcfs=2.3, shore_dist_ft=15, width_ft=300, depth_ft=1.8, slope=0.0010, mix_coeff=0.6, Q_location="side")
 
 #' @export
-# Use data in the "Moab_WWTP_WLA_2021.xlsm" file in worksheet "hydraulics". Not the same as worksheet "Stream-Mix", which may be problematic
 mixZone = function(streamQcfs, effluentQcfs, shore_dist_ft, width_ft, depth_ft, slope, mix_coeff=0.6, Q_location="side"){
+		# Testing data
+		## Use data in the "Moab_WWTP_WLA_2021.xlsm" file in worksheet "hydraulics". Not the same as worksheet "Stream-Mix", which may be problematic
 		streamQcfs=736
 		effluentQcfs=2.3
 		shore_dist_ft=15
@@ -63,11 +63,9 @@ mixZone = function(streamQcfs, effluentQcfs, shore_dist_ft, width_ft, depth_ft, 
 		# Q=(1.49/n)*A*R^(2/3)*S^(1/2) # rearrange to calculate n [mannings_n=(1.49/Q)*A*R^(2/3)*S^(1/2)]
 	area_ft2 = width_ft*depth_ft
 	hyd_rad_ft = 2*depth_ft+width_ft
-	mannings_n=(1.486/comb_q)*area_ft2*hyd_rad_ft^(2/3)*0.01^(1/2)
+	mannings_n=(1.486/comb_q)*area_ft2*hyd_rad_ft^(2/3)*slope^(1/2)
 	
 	# Check reasonable-ness of mannings_n (expected range = 0.018-0.060)
-		# maybe reference table of mannings n values for user (http://www.fsl.orst.edu/geowater/FX3/help/8_Hydraulic_Reference/Mannings_n_Tables.htm or
-		# https://pubs.usgs.gov/wsp/2339/report.pdf)
 	if(mannings_n<0.018){warning("Manning's n coefficient <0.018. See http://www.fsl.orst.edu/geowater/FX3/help/8_Hydraulic_Reference/Mannings_n_Tables.htm and https://pubs.usgs.gov/wsp/2339/report.pdf for more information.")}
 	if(mannings_n>0.060){warning("Manning's n coefficient >0.060. See http://www.fsl.orst.edu/geowater/FX3/help/8_Hydraulic_Reference/Mannings_n_Tables.htm and https://pubs.usgs.gov/wsp/2339/report.pdf for more information.")}
 	
@@ -91,10 +89,10 @@ mixZone = function(streamQcfs, effluentQcfs, shore_dist_ft, width_ft, depth_ft, 
 		# U*: shear velocity (ft/s)
 		# Q_location: stream effluent discharge location, where side = 1, center = 2
 	## shear velocity (ft/s)
-	shearVel = Sqrt(G*depth_ft*slope)
+	shearVel = sqrt(G*depth_ft*slope)
 	
 	## Froude number (-)
-	froudeNum = velocity_ftsec / Sqrt(G*depth_ft)
+	froudeNum = velocity_ftsec / sqrt(G*depth_ft)
 	
 	## lateral dispersion coefficient (ft2/s)
 	#mix_coeff=0.6 - default value in function currently. Do we want to user modified? Or permanant?
@@ -110,9 +108,8 @@ mixZone = function(streamQcfs, effluentQcfs, shore_dist_ft, width_ft, depth_ft, 
 	## longitudinal dispersion coefficient (ft2/s)
 	if (froudeNum <0.5){
 		longDispersionCoeff=0.058*comb_q / (slope * width_ft) # (McQuivey and Keefer, 1974)
-	}
-	else{
-		longDispersionCoeff=0.011*((velocity_ftsec^2 * width_ft^2) / (depth_ft * shearVel) # (Fisher et al., 1979)
+	}else{
+		longDispersionCoeff=0.011*(velocity_ftsec^2 * width_ft^2) / (depth_ft * shearVel) # (Fisher et al., 1979)
 	}
 	
 	# plume width (CHRONIC at 2500 ft & ACUTE at 15 min)
@@ -125,8 +122,8 @@ mixZone = function(streamQcfs, effluentQcfs, shore_dist_ft, width_ft, depth_ft, 
 		# U: the average downstream velocity (ft/s); velocity_ftsec
 	xDownChronic_ft=2500
 	tDownAcute_s=15*60 # in seconds
-	plume_widthChronic_ft=(((2*shore_dist_ft/width_ft+1)^2)*PI()*latDispersionCoeff*(xDownChronic_ft/velocity_ftsec))^0.5
-	plume_widthAcute_ft=(((2*shore_dist_ft/width_ft+1)^2)*PI()*latDispersionCoeff*((/velocity_ftsec*tDownAcute_s))^0.5
+	plume_widthChronic_ft=(((2*shore_dist_ft/width_ft+1)^2)*pi*latDispersionCoeff*(xDownChronic_ft/velocity_ftsec))^0.5
+	plume_widthAcute_ft=((2*shore_dist_ft/width_ft+1)^2)*pi*latDispersionCoeff*(velocity_ftsec*tDownAcute_s)^0.5
 					   
 	# Chronic theta or plume width as percent of river at 2500 ft and 15 min
 		# X1: the downstream plume distance, chronic calculated at 2500 ft; xDownChronic_ft
@@ -135,46 +132,46 @@ mixZone = function(streamQcfs, effluentQcfs, shore_dist_ft, width_ft, depth_ft, 
 		# Qup: the upstream seasonal 7Q10 critical Q ft3/s; streamQcfs
 		# Qeff: the seasonal average effluent discharge or annual (with note) if not seasonal in ft3/s; effluentQcfs
 	distPlumePercChronic=(((plume_widthChronic_ft/width_ft*(streamQcfs+effluentQcfs))-effluentQcfs)/streamQcfs)*100 # in percentage
-	if(xDownChronic_ft < 0){chronicPlumePercent=0}
-	else{
-		if(distPlumePercChronic > 0){chronicPlumePercent=distPlumePercChronic}
-		else{chronicPlumePercent=0}
+	if(xDownChronic_ft < 0){chronicPlumePercent=0
+	}else{
+		if(distPlumePercChronic > 0){chronicPlumePercent=distPlumePercChronic
+		}else{chronicPlumePercent=0}
 	}
 	distPlumePercAcute=(((plume_widthAcute_ft/width_ft*(streamQcfs+effluentQcfs))-effluentQcfs)/streamQcfs)*100 # in percentage
-	if(tDownAcute_s < 0){acutePlumePercent=0}
-	else{
-		if(distPlumePercAcute > 0){acutePlumePercent=distPlumePercAcute}
-		else{acutePlumePercent=0}
+	if(tDownAcute_s < 0){acutePlumePercent=0
+	}else{
+		if(distPlumePercAcute > 0){acutePlumePercent=distPlumePercAcute
+		}else{acutePlumePercent=0}
 	}
 	
 	# chronic flow limit
 	chronicQLimit=comb_q*chronicPlumePercent
 			     
 	# acute flow limit
-	if(distPlumePercAcute < 0.5){acuteQLimit = comb_q * distPlumePercAcute}
-	else{acuteQLimit = chronicQLimit * 0.5}
+	if(distPlumePercAcute < 0.5){acuteQLimit = comb_q * distPlumePercAcute
+	}else{acuteQLimit = chronicQLimit * 0.5}
 	
 	
 	# Gather, return, & print results
-	#chronicQLimit
-	#acuteQLimit
-	#
-	#chronicPlumePercent
-	#acutePlumePercent
-	#
-	#plume_widthChronic_ft
-	#plume_widthAcute_ft
-	#
-	#mixLength
-	#longDispersionCoeff
-	#latDispersionCoeff
-	#froudeNum
-	#shearVel
-	#dist_15min
-	#velocity_ftsec
-	#mannings_n
-	#hyd_rad_ft
-	#area_ft2
+	chronicQLimit
+	acuteQLimit
+	
+	chronicPlumePercent
+	acutePlumePercent
+	
+	plume_widthChronic_ft
+	plume_widthAcute_ft
+	
+	mixLength
+	longDispersionCoeff
+	latDispersionCoeff
+	froudeNum
+	shearVel
+	dist_15min
+	velocity_ftsec
+	mannings_n
+	hyd_rad_ft
+	area_ft2
 	
 	
 }
