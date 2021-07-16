@@ -19,35 +19,35 @@
 
 #' @export
 mixZone = function(streamQcfs, effluentQcfs, shore_dist_ft, width_ft, depth_ft, slope, mix_coeff=0.6, Q_location="side"){
-		# Testing data
-		## Use data in the "Moab_WWTP_WLA_2021.xlsm" file in worksheet "hydraulics". Not the same as worksheet "Stream-Mix", which may be problematic
-		streamQcfs=736
-		effluentQcfs=2.3
-		shore_dist_ft=15
-		width_ft=300
-		depth_ft=1.8
-		slope=0.0010
-		mix_coeff=0.6
-		Q_location="side"
-		
-		# streamQcfs: upstream seasonal 7Q10 critical Q (with wasteloadR tool pick USGS, DWQ, other sites 20-50 mi upstream using NHD+ reaches)
-			# daily USGS for 7Q10, need sites with n>=32, closest to furthest
-			# if not use (ie: DWQ) with n>=32
-			# if not daily with n>=32, critical flow is 95th% not 80th%
-		# effluentQcfs: seasonal average effluent discharge or annual (with note) if not seasonal
-			# from facility DMR or ICIS like in wasteloadR tool
-			# maybe a user picker for time range of data (ie: 5 yr, 10 yr, 20 yr) but typically 10 yr
-		# shore_dist_ft: Discharge distance from shore in feet.
-		# width_ft: the stream channel width at effluent discharge point
-			# can be user supplied, from NHD+ reach info, USGS stream characteriz, or other
-		# depth_ft: the average stream channel depth at effluent discharge point
-			# can be user supplied, from NHD+ reach info, USGS stream characteriz, DEM adjacent slope estimate, or other
-		# slope: the average stream channel slope around the effluent discharge point (ft/ft)
-			# can be user supplied, from NHD+ reach info
-			# with NHD+, get elevations 1, 2, and 3 mi up and downstream
-			# then calc ave river elev drop (ft/mi) across the distances
-			# if elev drop < 6.2 ft/mi then natural, otherwise channelized
-			# calculate stream sinuosity from (reach distance : linear distance)
+	# Testing data
+	## Use data in the "Moab_WWTP_WLA_2021.xlsm" file in worksheet "hydraulics". Not the same as worksheet "Stream-Mix", which may be problematic
+	streamQcfs=736
+	effluentQcfs=2.3
+	shore_dist_ft=15
+	width_ft=300
+	depth_ft=1.8
+	slope=0.0010
+	mix_coeff=0.6
+	Q_location="side"
+	
+	# streamQcfs: upstream seasonal 7Q10 critical Q (with wasteloadR tool pick USGS, DWQ, other sites 20-50 mi upstream using NHD+ reaches)
+		# daily USGS for 7Q10, need sites with n>=32, closest to furthest
+		# if not use (ie: DWQ) with n>=32
+		# if not daily with n>=32, critical flow is 95th% not 80th%
+	# effluentQcfs: seasonal average effluent discharge or annual (with note) if not seasonal
+		# from facility DMR or ICIS like in wasteloadR tool
+		# maybe a user picker for time range of data (ie: 5 yr, 10 yr, 20 yr) but typically 10 yr
+	# shore_dist_ft: Discharge distance from shore in feet.
+	# width_ft: the stream channel width at effluent discharge point
+		# can be user supplied, from NHD+ reach info, USGS stream characteriz, or other
+	# depth_ft: the average stream channel depth at effluent discharge point
+		# can be user supplied, from NHD+ reach info, USGS stream characteriz, DEM adjacent slope estimate, or other
+	# slope: the average stream channel slope around the effluent discharge point (ft/ft)
+		# can be user supplied, from NHD+ reach info
+		# with NHD+, get elevations 1, 2, and 3 mi up and downstream
+		# then calc ave river elev drop (ft/mi) across the distances
+		# if elev drop < 6.2 ft/mi then natural, otherwise channelized
+		# calculate stream sinuosity from (reach distance : linear distance)
 	
 	if(!Q_location%in%c("side","center")){stop("Q_location must be one of c('side','center')")}
 	
