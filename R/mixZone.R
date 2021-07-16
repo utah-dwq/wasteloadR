@@ -54,7 +54,7 @@ mixZone = function(streamQcfs, effluentQcfs, shore_dist_ft, width_ft, depth_ft, 
 	# Combined Q (upstream & discharge)
 	comb_q=streamQcfs+effluentQcfs
 	
-	# mannings_n #pull out to separate function? Or is automatic calculation here preferred?
+	# mannings_n
 	## defs: n=, A=, R=, S=
 		# n: stream channel mannings coefficient (typically 0.030 but variable); mannings_n
 		# A: stream channel area (A = width_ft*depth_ft); area_ft2
