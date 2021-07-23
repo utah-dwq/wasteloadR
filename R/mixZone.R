@@ -22,7 +22,7 @@ mixZone = function(streamQcfs, effluentQcfs, shore_dist_ft, width_ft, depth_ft, 
 	# Testing data
 	## Use data in the "Moab_WWTP_WLA_2021.xlsm" file in worksheet "hydraulics". Not the same as worksheet "Stream-Mix", which may be problematic
 	streamQcfs=736
-	effluentQcfs=2.3
+	effluentQcfs=2.3 # should be 3.2518
 	shore_dist_ft=15
 	width_ft=300
 	depth_ft=1.8
@@ -62,8 +62,8 @@ mixZone = function(streamQcfs, effluentQcfs, shore_dist_ft, width_ft, depth_ft, 
 		# S: (or slope above) the average stream channel slope around the effluent discharge point; slope
 		# Q=(1.49/n)*A*R^(2/3)*S^(1/2) # rearrange to calculate n [mannings_n=(1.49/Q)*A*R^(2/3)*S^(1/2)]
 	area_ft2 = width_ft*depth_ft
-	hyd_rad_ft = 2*depth_ft+width_ft
-	mannings_n=(1.486/comb_q)*area_ft2*hyd_rad_ft^(2/3)*slope^(1/2)
+	wet_perim_ft = 2*depth_ft+width_ft
+	mannings_n=(1.486/comb_q)*area_ft2*(area_ft2/wet_perim_ft)^(2/3)*slope^(1/2)
 	
 	# Check reasonable-ness of mannings_n (expected range = 0.018-0.060)
 	if(mannings_n<0.018){warning("Manning's n coefficient <0.018. See http://www.fsl.orst.edu/geowater/FX3/help/8_Hydraulic_Reference/Mannings_n_Tables.htm and https://pubs.usgs.gov/wsp/2339/report.pdf for more information.")}
@@ -122,8 +122,8 @@ mixZone = function(streamQcfs, effluentQcfs, shore_dist_ft, width_ft, depth_ft, 
 		# U: the average downstream velocity (ft/s); velocity_ftsec
 	xDownChronic_ft=2500
 	tDownAcute_s=15*60 # in seconds
-	plume_widthChronic_ft=(((2*shore_dist_ft/width_ft+1)^2)*pi*latDispersionCoeff*(xDownChronic_ft/velocity_ftsec))^0.5
-	plume_widthAcute_ft=((2*shore_dist_ft/width_ft+1)^2)*pi*latDispersionCoeff*(velocity_ftsec*tDownAcute_s)^0.5
+	plume_widthChronic_ft=(((2*shore_dist_ft/width_ft+1)^2)*2*pi*latDispersionCoeff*(xDownChronic_ft/velocity_ftsec))^0.5
+	plume_widthAcute_ft=((2*shore_dist_ft/width_ft+1)^2)*2*pi*latDispersionCoeff*(tDownAcute_s)^0.5
 					   
 	# Chronic theta or plume width as percent of river at 2500 ft and 15 min
 		# X1: the downstream plume distance, chronic calculated at 2500 ft; xDownChronic_ft
