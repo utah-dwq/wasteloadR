@@ -21,8 +21,8 @@
 mixZone = function(critQ_cfs, effluentQ_cfs, shore_dist_ft, width_ft, depth_ft, slope, mix_coeff=0.6, Q_location="side"){
 	# Testing data
 	## Use data in the "Moab_WWTP_WLA_2021.xlsm" file in worksheet "hydraulics". Not the same as worksheet "Stream-Mix", which may be problematic
-	streamQcfs=736
-	effluentQcfs=2.3 # should be 3.2518
+	critQ_cfs=736
+	effluentQ_cfs=2.3 # should be 3.2518
 	shore_dist_ft=15
 	width_ft=300
 	depth_ft=1.8
