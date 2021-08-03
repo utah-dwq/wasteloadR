@@ -3,8 +3,8 @@
 #' Function returns table with distance from discharge, travel time and plume width
 #' Function returns plume width at 2500 feet distance from discharge and 15 minutes of travel time, expressed as % of stream width
  
-#' @param streamQcfs Upstream seasonal 7Q10 critical flow in CFS
-#' @param effluentQcfs Seasonal average effluent discharge in CFS
+#' @param critQ_cfs Upstream seasonal 7Q10 critical flow in CFS
+#' @param effluentQ_cfs Seasonal average effluent discharge in CFS
 #' @param shore_dist_ft Discharge distance from shore in feet.
 #' @param width_ft Stream channel width in feet
 #' @param depth_ft Stream channel depth in feet
@@ -15,14 +15,14 @@
 #' @return TBD, table, list, etc
 
 #' @examples
-#' mixing_zone_stats=mixZone(streamQcfs=736, effluentQcfs=2.3, shore_dist_ft=15, width_ft=300, depth_ft=1.8, slope=0.0010, mix_coeff=0.6, Q_location="side")
+#' mixing_zone_stats=mixZone(critQ_cfs=736, effluentQ_cfs=2.3, shore_dist_ft=15, width_ft=300, depth_ft=1.8, slope=0.0010, mix_coeff=0.6, Q_location="side")
 
 #' @export
-mixZone = function(streamQcfs, effluentQcfs, shore_dist_ft, width_ft, depth_ft, slope, mix_coeff=0.6, Q_location="side"){
+mixZone = function(critQ_cfs, effluentQ_cfs, shore_dist_ft, width_ft, depth_ft, slope, mix_coeff=0.6, Q_location="side"){
 	# Testing data
 	## Use data in the "Moab_WWTP_WLA_2021.xlsm" file in worksheet "hydraulics". Not the same as worksheet "Stream-Mix", which may be problematic
-	streamQcfs=736
-	effluentQcfs=2.3
+	critQ_cfs=736
+	effluentQ_cfs=2.3
 	shore_dist_ft=15
 	width_ft=300
 	depth_ft=1.8
@@ -30,11 +30,11 @@ mixZone = function(streamQcfs, effluentQcfs, shore_dist_ft, width_ft, depth_ft, 
 	mix_coeff=0.6
 	Q_location="side"
 	
-	# streamQcfs: upstream seasonal 7Q10 critical Q (with wasteloadR tool pick USGS, DWQ, other sites 20-50 mi upstream using NHD+ reaches)
+	# critQ_cfs: upstream seasonal 7Q10 critical Q (with wasteloadR tool pick USGS, DWQ, other sites 20-50 mi upstream using NHD+ reaches)
 		# daily USGS for 7Q10, need sites with n>=32, closest to furthest
 		# if not use (ie: DWQ) with n>=32
 		# if not daily with n>=32, critical flow is 95th% not 80th%
-	# effluentQcfs: seasonal average effluent discharge or annual (with note) if not seasonal
+	# effluentQ_cfs: seasonal average effluent discharge or annual (with note) if not seasonal
 		# from facility DMR or ICIS like in wasteloadR tool
 		# maybe a user picker for time range of data (ie: 5 yr, 10 yr, 20 yr) but typically 10 yr
 	# shore_dist_ft: Discharge distance from shore in feet.
@@ -52,7 +52,7 @@ mixZone = function(streamQcfs, effluentQcfs, shore_dist_ft, width_ft, depth_ft, 
 	if(!Q_location%in%c("side","center")){stop("Q_location must be one of c('side','center')")}
 	
 	# Combined Q (upstream & discharge)
-	comb_q=streamQcfs+effluentQcfs
+	comb_q=critQ_cfs+effluentQ_cfs
 	
 	# mannings_n
 	## defs: n=, A=, R=, S=
@@ -129,15 +129,15 @@ mixZone = function(streamQcfs, effluentQcfs, shore_dist_ft, width_ft, depth_ft, 
 		# X1: the downstream plume distance, chronic calculated at 2500 ft; xDownChronic_ft
 		# plume width: the plume width across the stream at chronic distance of effluent discharge (2500 ft) in ft; plume_width_ft
 		# W: the average stream channel width at effluent discharge point; width_ft
-		# Qup: the upstream seasonal 7Q10 critical Q ft3/s; streamQcfs
-		# Qeff: the seasonal average effluent discharge or annual (with note) if not seasonal in ft3/s; effluentQcfs
-	distPlumePercChronic=(((plume_widthChronic_ft/width_ft*(streamQcfs+effluentQcfs))-effluentQcfs)/streamQcfs)*100 # in percentage
+		# Qup: the upstream seasonal 7Q10 critical Q ft3/s; critQ_cfs
+		# Qeff: the seasonal average effluent discharge or annual (with note) if not seasonal in ft3/s; effluentQ_cfs
+	distPlumePercChronic=(((plume_widthChronic_ft/width_ft*(critQ_cfs+effluentQ_cfs))-effluentQ_cfs)/critQ_cfs)*100 # in percentage
 	if(xDownChronic_ft < 0){chronicPlumePercent=0
 	}else{
 		if(distPlumePercChronic > 0){chronicPlumePercent=distPlumePercChronic
 		}else{chronicPlumePercent=0}
 	}
-	distPlumePercAcute=(((plume_widthAcute_ft/width_ft*(streamQcfs+effluentQcfs))-effluentQcfs)/streamQcfs)*100 # in percentage
+	distPlumePercAcute=(((plume_widthAcute_ft/width_ft*(critQ_cfs+effluentQ_cfs))-effluentQ_cfs)/critQ_cfs)*100 # in percentage
 	if(tDownAcute_s < 0){acutePlumePercent=0
 	}else{
 		if(distPlumePercAcute > 0){acutePlumePercent=distPlumePercAcute
