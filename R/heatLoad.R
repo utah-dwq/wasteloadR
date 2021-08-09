@@ -12,7 +12,7 @@
 #' @examples
 
 #' @export
-heatLoad = function(q, t, use){
+heatLoad = function(q, t, alu){
 	# Definitions:
 	## t ??? Receiving water temperature C? Looks like we might also need effluent t.
 	## q - combined effluent + recieving discharge? cfs do we need both recieving water and effluent Qs here again?
