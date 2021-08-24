@@ -58,7 +58,7 @@ mixZone = function(critQ_cfs, effluentQ_cfs, shore_dist_ft, width_ft, depth_ft, 
 	## defs: n=, A=, R=, S=
 		# n: stream channel mannings coefficient (typically 0.030 but variable); mannings_n
 		# A: stream channel area (A = width_ft*depth_ft); area_ft2
-		# R: stream channel hydraulic radius (trapezoidal, rectangular, other?) (R = 2*depth_ft+width_ft); hyd_rad_ft
+		# R: stream channel hydraulic radius (trapezoidal, rectangular, other?) (R = 2*depth_ft+width_ft); wet_perim_ft 
 		# S: (or slope above) the average stream channel slope around the effluent discharge point; slope
 		# Q=(1.49/n)*A*R^(2/3)*S^(1/2) # rearrange to calculate n [mannings_n=(1.49/Q)*A*R^(2/3)*S^(1/2)]
 	area_ft2 = width_ft*depth_ft
@@ -95,7 +95,7 @@ mixZone = function(critQ_cfs, effluentQ_cfs, shore_dist_ft, width_ft, depth_ft, 
 	froudeNum = velocity_ftsec / sqrt(G*depth_ft)
 
 	## lateral dispersion coefficient (ft2/s)
-	#mix_coeff=0.6 - default value in function currently. Do we want to user modified? Or permanant?
+	#mix_coeff=0.6 - default value in function currently. Do we want user modified? Or permanant?
 	latDispersionCoeff=shearVel*depth_ft*mix_coeff
 
 	if(Q_location == "side"){
@@ -170,7 +170,7 @@ mixZone = function(critQ_cfs, effluentQ_cfs, shore_dist_ft, width_ft, depth_ft, 
 	dist_15min
 	velocity_ftsec
 	mannings_n
-	hyd_rad_ft
+	wet_perim_ft 
 	area_ft2
 
 
