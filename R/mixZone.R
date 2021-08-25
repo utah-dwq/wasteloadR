@@ -185,5 +185,4 @@ mixZone = function(critQ_cfs, effluentQ_cfs, shore_dist_ft, width_ft, depth_ft, 
 	wet_perim_ft 
 	area_ft2
 
-
 }
