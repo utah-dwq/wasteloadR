@@ -9,7 +9,7 @@
 #' @param effluentQ_cfs Seasonal average effluent discharge in CFS
 #' @param temp_receiving Receiving water temperature C 
 #' @param temp_effluent Effluent discharge water temperature C
-#' @param alu
+#' @param aquat_life_use - aquatic life use. One of 3A, 3B, or 3C
 
 #' @return TBD, table, list, etc
 
@@ -21,68 +21,101 @@
 #need a loop to get seasonal values and run function
 
 heatLoad = function(critQ_cfs=32.0, effluentQ_cfs=7.4326,temp_receiving=13.93, temp_effluent=5.00,aquat_life_use="3B"){
-	# Definitions:
-	## critQ_cfs Upstream seasonal 7Q10 critical flow in CFS # Yes, need both receiving and effluent Qs for combined
-	## effluentQ_cfs Seasonal average effluent discharge in CFS
-	## temp_receiving Receiving water temperature C.
-	## temp_effluent Effluent discharge water temperature C.
-	## aquat_life_use - aquatic life use. One of 3A, 3B, or 3C
-	
-	
-	#calculate heat load (MBTU/d) for receiving and effluent
-	heat_load_receiving = critQ_cfs * temp_receiving * 9.7
-	heat_load_effluent= = effluentQ_cfs * temp_effluent * 9.7
-	
-	## Define criteria by use
-	#Use AL Standards (T [3A-20C, others 27C] and deltaT [3A-2C, others 4C])
-	if(!aquat_life_use %in% c("3A", "3B", "3C")){
-		stop("Error. aquat_life_use must be one of '3A', '3B', or '3C'")
-	}
-	if(aquat_life_use == "3A"){
-		temp_criterion=20
-		delta_temp=2
-	}else{
-		temp_criterion=27
-		delta_temp=4
-	}
-		
-
-	#calculate combined Q (upstream & effluent)
-	comb_q = critQ_cfs + effluentQ_cfs
-	
-	#calculate combined temperature ((Qr*Tr)+(Qd*Td))/(Qr+Qd)
-	combined_temp = ((critQ_cfs * temp_receiving) + (effluentQ_cfs * temp_effluent)) / (comb_q) 
-
-	#calculate T increase (Tcombined - Treceiving)
-	t_increase = combined_temp - temp_receiving
-
-	#check if temperature and temperature increase exceeds standards and note
-	temperature_exceed = ifelse(combined_temp > temp_criterion, TRUE, FALSE)
-	t_increase_exceed = ifelse(t_increase > delta_temp, TRUE, FALSE)
-
-	#calculate seasonal effluent temperature limit summary
-	#	use ((Qu*Tu)+(Qe*Te)) = (Qd*Td) rearranged to Te = ((Qd*Td)-(Qu*Tu))/(Qe)
-	temp_effluent_limit=((comb_q * combined_temp) - (critQ_cfs * temp_receiving))/(effluentQ_cfs)
-	
-	#note and caveat
-	# "Note: wasteload analysis may allow unreasonably high allowed temperature and heat loading.'
-	# 'Narrative standards, new source performance standards, and BAT also apply, thus possibly'
-	# 'reducing the values give in this wasteload analysis.'
-
-
-	# Gather, return, & print results
-	heat_load_receiving
-	heat_load_effluent
-	
-	temp_criterion
-	delta_temp
-	
-	comb_q
-	combined_temp
-	t_increase
-	temperature_exceed
-	t_increase_exceed
-	temp_effluent_limit
+  # Definitions:
+  ## critQ_cfs Upstream seasonal 7Q10 critical flow in CFS # Yes, need both receiving and effluent Qs for combined
+  ## effluentQ_cfs Seasonal average effluent discharge in CFS
+  ## temp_receiving Receiving water temperature C.
+  ## temp_effluent Effluent discharge water temperature C.
+  ## aquat_life_use - aquatic life use. One of 3A, 3B, or 3C
+  
+  
+  #calculate initial heat loads (MBTU/d) for receiving and effluent
+  # the 9.7 multiplier is suspect, need reference
+  # I think the equation is MBTU = ft3/s*(448.83 GPM/ft3/s)*(8.33 lb/gal)*(60 min/hr)*(1 MBTU/1000000 BTU)*(Teff-Tup)
+  heat_load_receiving_init = critQ_cfs * temp_receiving * 9.7
+  heat_load_effluent_init= effluentQ_cfs * temp_effluent * 9.7
+  
+  ## Define criteria by use
+  #Use AL Standards (T [3A-20C, others 27C] and deltaT [3A-2C, others 4C])
+  if(!aquat_life_use %in% c("3A", "3B", "3C")){
+    stop("Error. aquat_life_use must be one of '3A', '3B', or '3C'")
+  }
+  if(aquat_life_use == "3A"){
+    temp_criterion=20
+    delta_temp=2
+  }else{
+    temp_criterion=27
+    delta_temp=4
+  }
+  
+  
+  #calculate combined Q (upstream & effluent)
+  comb_q = critQ_cfs + effluentQ_cfs
+  
+  #calculate initial combined temperature ((Qr*Tr)+(Qd*Td))/(Qr+Qd)
+  combined_temp_init = ((critQ_cfs * temp_receiving) + (effluentQ_cfs * temp_effluent)) / (comb_q) 
+  
+  #calculate initial temperature increase (Tcombined - Treceiving)
+  t_increase_init = combined_temp_init - temp_receiving
+  
+  #solve effluent temperature at temperature increase standard
+  # rearrange (Qup*Tup) + (Qeff*Teff) = (Qdn*Tdn) for Tdn
+  # then use Tincrease =Tdn-Tup at Tincrease standard where Tdn is previous eqn
+  # solve for Teff = (((Tincrease+Tup)*Qdn)-(Qup*Tup))/Qeff
+  temp_effluent_increase_limit=(((delta_temp+temp_receiving)*comb_q)-(critQ_cfs * temp_receiving))/(effluentQ_cfs)
+  
+  # may need eqn here
+  # solved Teff limit at max temp increase but if combined_temp > temp_criterion, drop Teff limit even more, solve this
+  temp_effluent_temp_limit = ((comb_q * temp_criterion) - (critQ_cfs * temp_receiving)) / (effluentQ_cfs)
+  
+  # then if statement to pick the lower of the limits
+  if(temp_effluent_increase_limit < temp_effluent_temp_limit){
+    temp_effluent_limit=temp_effluent_increase_limit
+  }else{
+    temp_effluent_limit=temp_effluent_temp_limit
+  }
+  
+  #calculate final heat loads (MBTU/d) for receiving and effluent
+  # the 9.7 multiplier is suspect, need reference
+  # I think the equation is MBTU = ft3/s*(448.83 GPM/ft3/s)*(8.33 lb/gal)*(60 min/hr)*(1 MBTU/1000000 BTU)*(Teff-Tup)
+  heat_load_receiving = critQ_cfs * temp_receiving * 9.7
+  heat_load_effluent= effluentQ_cfs * temp_effluent_limit * 9.7
+  
+  #calculate final combined temperature ((Qr*Tr)+(Qd*Td))/(Qr+Qd)
+  combined_temp = ((critQ_cfs * temp_receiving) + (effluentQ_cfs * temp_effluent_limit)) / (comb_q)
+    
+  #calculate final temperature increase (Tcombined - Treceiving)
+  t_increase = combined_temp - temp_receiving
+  
+  #check if temperature and temperature increase exceeds standards and note
+  temperature_exceed = ifelse(combined_temp > temp_criterion, TRUE, FALSE)
+  t_increase_exceed = ifelse(t_increase > delta_temp, TRUE, FALSE)
+  
+  #note and caveat
+  # "Note: wasteload analysis may allow unreasonably high allowed temperature and heat loading.'
+  # 'Narrative standards, new source performance standards, and BAT also apply, thus possibly'
+  # 'reducing the values give in this wasteload analysis.'
+  
+  
+  # Gather, return, & print results
+  heat_load_receiving_init
+  heat_load_effluent_init
+  heat_load_receiving
+  heat_load_effluent
+  
+  temp_criterion
+  delta_temp
+  
+  comb_q
+  combined_temp_init
+  t_increase_init
+  temp_effluent_increase_limit
+  temp_effluent_temp_limit
+  combined_temp
+  t_increase
+  temperature_exceed
+  t_increase_exceed
+  temp_effluent_limit
 	
 }
 
