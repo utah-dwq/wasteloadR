@@ -117,6 +117,7 @@ heatLoad = function(critQ_cfs=32.0, effluentQ_cfs=7.4326,temp_receiving=13.93, t
   t_increase_exceed
   temp_effluent_limit
 	
+	
 }
 
 
