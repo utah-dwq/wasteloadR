@@ -20,7 +20,8 @@ wetCalc = function(critQ_cfs, effluentQ_cfs, width_ft, plume_width_15min_ft, plu
 	## critQ_cfs: River Q (7Q10): summer critical flow value in background Q and WQ function
 	## effluentQ_cfs: WWTP Q: summer projected or design flow from WLA effluent function
 	## width_ft: River width: determined earlier with map (also used in mixZone())
-	## plume_width_15min_ft: Plume width at 15 min or 50%: determined in mixing zone function (mixZone() output)
+	### JV to CS: mixZone puts out both acute & chronic plume widths which ones are these? Or do you do this twice?
+	## plume_width_15min_ft: Plume width at 15 min or 50%: determined in mixing zone function (mixZone() output). 
 	## plume_width_2500ft_ft: Plume width at 2500 ft: determined in mixing zone function (mixZone() output)
 	
 	# Process
@@ -31,8 +32,7 @@ wetCalc = function(critQ_cfs, effluentQ_cfs, width_ft, plume_width_15min_ft, plu
 	chronic_dilution_Q=plume_width_2500ft_ft/width_ft*critQ_cfs	
 	
 	## determine if totally mixed or incompletely mixed
-	fully_mixed=ifelse(effluentQ_cfs * 2 <= critQ_cfs, TRUE, FALSE) # Generating separate fully_mixed object so we can print/return it for user review, then used in if() statement below
-	
+	fully_mixed=ifelse(effluentQ_cfs * 2 <= critQ_cfs, TRUE, FALSE) # Generating separate fully_mixed object so we can print/return it for user review, used in if() statement below	
 	
 	#	Yes - Qeff (cfs) * 2 > Qup # JV to CS: Double my check fully_mixed ifelse above. I interpreted Qeff (cfs) as effluentQ_cfs & Qup as critQ_cfs
 	#		ratio of mix to design: (Qeff + [acute dilution Q])/Qeff
