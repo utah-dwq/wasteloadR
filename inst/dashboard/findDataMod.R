@@ -191,9 +191,20 @@ findDataMod <- function(input, output, session, permits_coords){
 		req(input$map_bounds)
 		show_modal_spinner(spin = "double-bounce", color = "#112446", text = "Querying...", session = shiny::getDefaultReactiveDomain())	
 		map_box=input$map_bounds
-		bbox=paste(map_box[4], map_box[3], map_box[2], map_box[1], sep='%2C')
-		robs$sites=wqTools::readWQP(type='sites', bBox=bbox, siteType=c("Lake, Reservoir, Impoundment","Stream","Spring","Facility"))
-		act=wqTools::readWQP(type='activity', bBox=bbox, siteType=c("Lake, Reservoir, Impoundment","Stream","Spring","Facility"))
+		#bbox=paste(map_box[4], map_box[3], map_box[2], map_box[1], sep='%2C')
+		
+		ab=(map_box$north-map_box$south)*69/2
+		radius=sqrt(ab^2*2)*1.1
+		center_lat=input$map_center$lat
+		center_lon=input$map_center$lng
+
+		
+		sites=wqTools::readWQP(type='sites', lat=center_lat, long=center_lon, within=radius, siteType=c("Lake, Reservoir, Impoundment","Stream","Spring","Facility"))
+		act=wqTools::readWQP(type='activity', lat=center_lat, long=center_lon, within=radius, siteType=c("Lake, Reservoir, Impoundment","Stream","Spring","Facility"))
+		if(map_box$east>map_box$west & map_box$north>map_box$south){
+			sites=subset(sites, LongitudeMeasure>=map_box[[4]] & LatitudeMeasure>=map_box[[3]] & LongitudeMeasure<=map_box[[2]] & LatitudeMeasure<=map_box[[1]])
+		}
+		robs$sites=sites
 		robs$activities=subset(act, MonitoringLocationIdentifier %in% robs$sites$MonitoringLocationIdentifier)
 		visits=unique(robs$activities[,c("MonitoringLocationIdentifier","ActivityStartDate")])
 		visit_counts=aggregate(ActivityStartDate~MonitoringLocationIdentifier, visits, FUN='length')
