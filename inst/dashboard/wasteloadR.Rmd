@@ -68,12 +68,6 @@ figuresModUI('figures')
 figures=callModule(module=figuresMod, id='figures', wq_data)
 ```
 
-#  `r icon('table')` Wasteload stats
-
-```{r}
-wlStatsModUI('wl_stats')
-wl_stats=callModule(module=wlStatsMod, id='wl_stats', wq_data)
-```
 
 
 
