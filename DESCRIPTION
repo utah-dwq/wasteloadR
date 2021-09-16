@@ -22,7 +22,7 @@ Imports:
     leaflet,
     leaflet.extras,
     miniUI,
-	shinyBusy,
+	shinybusy,
     shinyWidgets,
 	roll,
 	plyr,
