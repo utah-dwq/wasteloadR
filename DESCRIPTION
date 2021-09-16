@@ -20,12 +20,17 @@ Imports:
     rmarkdown,
     wqTools,
     leaflet,
+    leaflet.extras,
     miniUI,
+	shinyBusy,
     shinyWidgets,
 	roll,
 	plyr,
 	dplyr,
 	lubridate,
-	dataRetrieval
+	dataRetrieval,
+	plotly,
+	sortable,
+	flexdashboard
 Remotes:
 	utah-dwq/wqTools
