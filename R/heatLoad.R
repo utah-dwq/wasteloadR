@@ -14,13 +14,13 @@
 #' @return TBD, table, list, etc
 
 #' @examples
-#' heatLoad = function(critQ_cfs=32.0, effluentQ_cfs=7.4326,temp_receiving=13.93, temp_effluent=5.00,aquat_life_use="3B")
+#' result = heatLoad(critQ_cfs=32.0, effluentQ_cfs=7.4326,temp_receiving=13.93, temp_effluent=5.00, aquat_life_use="3B")
+
+#' @return
+#' Returns a named list of calculated results.
 
 #' @export
-
-#need a loop to get seasonal values and run function
-
-heatLoad = function(critQ_cfs=32.0, effluentQ_cfs=7.4326,temp_receiving=13.93, temp_effluent=5.00,aquat_life_use="3B"){
+heatLoad = function(critQ_cfs, effluentQ_cfs, temp_receiving, temp_effluent,aquat_life_use){
   # Definitions:
   ## critQ_cfs Upstream seasonal 7Q10 critical flow in CFS # Yes, need both receiving and effluent Qs for combined
   ## effluentQ_cfs Seasonal average effluent discharge in CFS
@@ -28,7 +28,14 @@ heatLoad = function(critQ_cfs=32.0, effluentQ_cfs=7.4326,temp_receiving=13.93, t
   ## temp_effluent Effluent discharge water temperature C.
   ## aquat_life_use - aquatic life use. One of 3A, 3B, or 3C
   
-  
+  #need a loop to get seasonal values and run function (comment from Chris)
+    # JV note: A few options for this:
+	# 1. apply() or ddply() to a dataframe of input vars
+	# 2. Much of the function already works w/ vector inputs (e.g. critQ_cfs=c(32.0, 28, 22, 25)), so we could probably allow vectors as arguments. We'd need to loop the if() statement parts. 
+	#    We'd probably want to name the seasons as an arg and formulate the results.
+	# 3. Simplest approach is just to call heatLoad() once for each season and give it appropriate args for each season. We can make core results stackable.
+	# I think we're OK for now viewing this function as a single season function that can be applied to multiple seasons in the future
+
   #calculate initial heat loads (MBTU/d) for receiving and effluent
   # the 9.7 multiplier is suspect, need reference
   # I think the equation is MBTU = ft3/s*(448.83 GPM/ft3/s)*(8.33 lb/gal)*(60 min/hr)*(1 MBTU/1000000 BTU)*(Teff-Tup)
@@ -98,26 +105,28 @@ heatLoad = function(critQ_cfs=32.0, effluentQ_cfs=7.4326,temp_receiving=13.93, t
   
   
   # Gather, return, & print results
-  heat_load_receiving_init
-  heat_load_effluent_init
-  heat_load_receiving
-  heat_load_effluent
-  
-  temp_criterion
-  delta_temp
-  
-  comb_q
-  combined_temp_init
-  t_increase_init
-  temp_effluent_increase_limit
-  temp_effluent_temp_limit
-  combined_temp
-  t_increase
-  temperature_exceed
-  t_increase_exceed
-  temp_effluent_limit
+  result=list(
+	heat_load_receiving_init=heat_load_receiving_init,
+	heat_load_effluent_init=heat_load_effluent_init,
+	heat_load_receiving=heat_load_receiving,
+	heat_load_effluent=heat_load_effluent,
 	
+	temp_criterion=temp_criterion,
+	delta_temp=delta_temp,
 	
+	comb_q=comb_q,
+	combined_temp_init=combined_temp_init,
+	t_increase_init=t_increase_init,
+	temp_effluent_increase_limit=temp_effluent_increase_limit,
+	temp_effluent_temp_limit=temp_effluent_temp_limit,
+	combined_temp=combined_temp,
+	t_increase=t_increase,
+	temperature_exceed=temperature_exceed,
+	t_increase_exceed=t_increase_exceed,
+	temp_effluent_limit=temp_effluent_limit
+  )
+
+  return(result)
 }
 
 
