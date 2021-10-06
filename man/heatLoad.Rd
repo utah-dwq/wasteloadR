@@ -31,8 +31,6 @@ heatLoad(
 }}
 }
 \value{
-TBD, table, list, etc
-
 Returns a named list of calculated results.
 }
 \description{

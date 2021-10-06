@@ -36,7 +36,7 @@ mixZone(
 \item{Q_location}{Discharge channel location. One of "side" (default) or "center".}
 }
 \value{
-TBD, table, list, etc
+Returns a named list of calculated results.
 }
 \description{
 Calculate mixing zone statistics for wasteloads
