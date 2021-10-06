@@ -11,13 +11,11 @@
 #' @param temp_effluent Effluent discharge water temperature C
 #' @param aquat_life_use - aquatic life use. One of 3A, 3B, or 3C
 
-#' @return TBD, table, list, etc
+#' @return
+#' Returns a named list of calculated results.
 
 #' @examples
 #' result = heatLoad(critQ_cfs=32.0, effluentQ_cfs=7.4326,temp_receiving=13.93, temp_effluent=5.00, aquat_life_use="3B")
-
-#' @return
-#' Returns a named list of calculated results.
 
 #' @export
 heatLoad = function(critQ_cfs, effluentQ_cfs, temp_receiving, temp_effluent,aquat_life_use){
