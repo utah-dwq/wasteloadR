@@ -12,7 +12,8 @@
 #' @param mix_coeff Mixing coefficient estimate. Default is 0.6.
 #' @param Q_location Discharge channel location. One of "side" (default) or "center".
 
-#' @return TBD, table, list, etc
+#' @return
+#' Returns a named list of calculated results.
 
 #' @examples
 #' mixing_zone_stats=mixZone(critQ_cfs=736, effluentQ_cfs=2.3, shore_dist_ft=15, width_ft=300, depth_ft=1.8, slope=0.0010, mix_coeff=0.6, Q_location="side")
@@ -21,14 +22,14 @@
 mixZone = function(critQ_cfs, effluentQ_cfs, shore_dist_ft, width_ft, depth_ft, slope, mix_coeff=0.6, Q_location="side"){
 	# Testing data
 	## Use data in the "Moab_WWTP_WLA_2021.xlsm" file in worksheet "hydraulics". Not the same as worksheet "Stream-Mix", which may be problematic
-	critQ_cfs=736
-	effluentQ_cfs=3.2518
-	shore_dist_ft=15
-	width_ft=300
-	depth_ft=1.8
-	slope=0.0010
-	mix_coeff=0.6
-	Q_location="side"
+	#critQ_cfs=736
+	#effluentQ_cfs=3.2518
+	#shore_dist_ft=15
+	#width_ft=300
+	#depth_ft=1.8
+	#slope=0.0010
+	#mix_coeff=0.6
+	#Q_location="side"
 
 	# critQ_cfs: upstream seasonal 7Q10 critical Q (with wasteloadR tool pick USGS, DWQ, other sites 20-50 mi upstream using NHD+ reaches)
 		# daily USGS for 7Q10, need sites with n>=32, closest to furthest
@@ -164,25 +165,29 @@ mixZone = function(critQ_cfs, effluentQ_cfs, shore_dist_ft, width_ft, depth_ft, 
 
 
 	# Gather, return, & print results
-	chronicQLimit
-	acuteQLimit
-
-	chronicPlumePercent
-	acutePlumePercent
-	plume_widthChronic_ft
-	plume_widthAcute_ft
-
-	mixLength
-	longDispersionCoeff
-	latDispersionCoeff
-	froudeNum
-	shearVel
-	dist_15min
-	time_2500_ft
-	velocity_ftsec
-	mannings_n
-	hyd_rad_ft
-	wet_perim_ft 
-	area_ft2
+	result=list(
+		chronicQLimit=chronicQLimit,
+		acuteQLimit=acuteQLimit,
+	
+		chronicPlumePercent=chronicPlumePercent,
+		acutePlumePercent=acutePlumePercent,
+		plume_widthChronic_ft=plume_widthChronic_ft,
+		plume_widthAcute_ft=plume_widthAcute_ft,
+	    
+		mixLength=mixLength,
+		longDispersionCoeff=longDispersionCoeff,
+		latDispersionCoeff=latDispersionCoeff,
+		froudeNum=froudeNum,
+		shearVel=shearVel,
+		dist_15min=dist_15min,
+		time_2500_ft=time_2500_ft,
+		velocity_ftsec=velocity_ftsec,
+		mannings_n=mannings_n,
+		hyd_rad_ft=hyd_rad_ft,
+		wet_perim_ft=wet_perim_ft,
+		area_ft2=area_ft2
+	)
+	
+	return(result)
 
 }
