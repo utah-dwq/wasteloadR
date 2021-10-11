@@ -35,6 +35,7 @@ wetCalc = function(critQ_cfs, effluentQ_cfs, width_ft, plume_width_15min_ft, plu
 	fully_mixed=ifelse(effluentQ_cfs * 2 <= critQ_cfs, TRUE, FALSE) # Generating separate fully_mixed object so we can print/return it for user review, used in if() statement below	
 	
 	#	Yes - Qeff (cfs) * 2 > Qup # JV to CS: Double my check fully_mixed ifelse above. I interpreted Qeff (cfs) as effluentQ_cfs & Qup as critQ_cfs
+	#					CS to JV: I think above is >, not <=. The above implies mixed if less than 50% I think
 	#		ratio of mix to design: (Qeff + [acute dilution Q])/Qeff
 	#		acute % effluent: 
 	#			if ratio > 3.33 Qeff/(0.3 * [acute dilution Q])
