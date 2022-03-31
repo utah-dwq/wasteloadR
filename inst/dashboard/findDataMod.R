@@ -191,19 +191,16 @@ findDataMod <- function(input, output, session, permits_coords){
 		req(input$map_bounds)
 		show_modal_spinner(spin = "double-bounce", color = "#112446", text = "Querying...", session = shiny::getDefaultReactiveDomain())	
 		map_box=input$map_bounds
-		#bbox=paste(map_box[4], map_box[3], map_box[2], map_box[1], sep='%2C')
+		bbox=paste(map_box[4], map_box[3], map_box[2], map_box[1], sep='%2C')
 		
-		ab=(map_box$north-map_box$south)*69/2
-		radius=sqrt(ab^2*2)*1.1
-		center_lat=input$map_center$lat
-		center_lon=input$map_center$lng
+		#ab=(map_box$north-map_box$south)*69/2
+		#radius=sqrt(ab^2*2)*1.1
+		#center_lat=input$map_center$lat
+		#center_lon=input$map_center$lng
 
 		
-		sites=wqTools::readWQP(type='sites', lat=center_lat, long=center_lon, within=radius, siteType=c("Lake, Reservoir, Impoundment","Stream","Spring","Facility"))
-		act=wqTools::readWQP(type='activity', lat=center_lat, long=center_lon, within=radius, siteType=c("Lake, Reservoir, Impoundment","Stream","Spring","Facility"))
-		if(map_box$east>map_box$west & map_box$north>map_box$south){
-			sites=subset(sites, LongitudeMeasure>=map_box[[4]] & LatitudeMeasure>=map_box[[3]] & LongitudeMeasure<=map_box[[2]] & LatitudeMeasure<=map_box[[1]])
-		}
+		sites=wqTools::readWQP(type='sites', bBox=bbox, siteType=c("Lake, Reservoir, Impoundment","Stream","Spring","Facility"))
+		act=wqTools::readWQP(type='activity', bBox=bbox, siteType=c("Lake, Reservoir, Impoundment","Stream","Spring","Facility"))
 		robs$sites=sites
 		robs$activities=subset(act, MonitoringLocationIdentifier %in% robs$sites$MonitoringLocationIdentifier)
 		visits=unique(robs$activities[,c("MonitoringLocationIdentifier","ActivityStartDate")])
@@ -286,6 +283,7 @@ findDataMod <- function(input, output, session, permits_coords){
 		wq_data=wqTools::readWQP(type='result', siteid=robs$sel_sites)
 		wq_data=merge(wq_data, subset(map_sites(), MonitoringLocationIdentifier %in% robs$sel_sites))
 		wq_data$value=wqTools::facToNum(wq_data$ResultMeasureValue)
+		wq_data$value=ifelse(is.na(wq_data$value) & wq_data$ResultDetectionConditionText=="Not Detected", wq_data$DetectionQuantitationLimitMeasure.MeasureValue, wq_data$value)
 		wq_data$ResultSampleFractionText[is.na(wq_data$ResultSampleFractionText)]="None"
 		#wq_data=wqTools::assignAUs(wq_data)
 		remove_modal_spinner()
