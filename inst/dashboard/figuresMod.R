@@ -29,7 +29,7 @@ figuresMod <- function(input, output, session, wq_data){
 	
 	
 	
-	# Note - currently dropping all NA values in data for figures. Need to add ability to fill w/ detection limts
+	# Note - non-detects plotted at detection limits
 	
 	# Empty reactive objects
 	reactive_objects=reactiveValues()
