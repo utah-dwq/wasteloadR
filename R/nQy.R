@@ -8,7 +8,7 @@
 #' @return Returns a list of results including the calculated nQy statistic, a data frame of annual n-day flow minima and distribution information, and a plot to examine the fit.
 #' @import dplyr
 #' @importFrom lubridate year
-#' @importFrom zoo::rollmean
+#' @importFrom zoo rollmean
 #' @examples
 #' # Basic usage
 #' ## Get data

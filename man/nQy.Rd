@@ -10,8 +10,7 @@ nQy(
   y = 10,
   date_col = "Date",
   q_col = "discharge_cfs",
-  min_obs = 1,
-  out_type = "nQy"
+  plot_fit = TRUE
 )
 }
 \arguments{
@@ -24,13 +23,9 @@ nQy(
 \item{date_col}{Column name containing date values. Must be in standard "YYYY-MM-DD" date format.}
 
 \item{q_col}{Column name containing discharge values. Any appropriate discharge units are OK. The result will be in the same units as the input.}
-
-\item{min_obs}{Minimum number of daily observations to allow an n-day average to be calculated. Default 1. Passed to roll::roll_mean for n-day average calculations. See ?roll::roll_mean for more information regarding usage.}
-
-\item{out_type}{One of nQy for low flow statistic output or min_ann_q to see the minimum annual values of n-day average discharges.}
 }
 \value{
-Either a numeric value of nQy or a dataframe of minimum annual n-day average discharge values.
+Returns a list of results including the calculated nQy statistic, a data frame of annual n-day flow minima and distribution information, and a plot to examine the fit.
 }
 \description{
 Generate low flow statistics (nQy) for wasteloads
@@ -46,28 +41,8 @@ gauge_data=dataRetrieval::readNWISdv(siteNumbers="10171000", startDate="2000-01-
 JR_1700S_7Q10=nQy(data=gauge_data, n=7, y=10, date_col="Date", q_col="discharge_cfs")
 JR_1700S_7Q10
 
-## Get min annual flows instead of nQy result
-JR_1700S_min_ann_Q=nQy(data=gauge_data, n=7, y=10, date_col="Date", q_col="discharge_cfs", out_type="min_ann_q")
-JR_1700S_min_ann_Q
-
 ## Other nQy types
-JR1700S_30Q2=nQy(data=gauge_data, n=30, y=5, date_col="Date", q_col="discharge_cfs")
-JR1700S_30Q2
+JR1700S_1Q10=nQy(data=gauge_data, n=1, y=10, date_col="Date", q_col="discharge_cfs")
+JR1700S_1Q10
 
-# Using plyr::ddply to perform advanced analyses (multiple sites, seasonal, etc.)
-
-## Multiple sites
-gauge_data=dataRetrieval::readNWISdv(siteNumbers=c("10171000","10168000","10170500"), startDate="2000-01-01", parameterCd="00060") \%>\% dplyr::rename(discharge_cfs=X_00060_00003, disch_code=X_00060_00003_cd)# Parameter code 00060 = discharge in cfs. see also ?readNWISuv() to read high frequency values
-multi_site_7Q10=plyr::ddply(gauge_data, .variables="site_no", .fun="nQy") # Just default arguments to nQy here which generates 7Q10
-multi_site_7Q10
-
-## Split by season
-gauge_data=dataRetrieval::readNWISdv(siteNumbers=c("10171000","10168000","10170500"), startDate="2000-01-01", parameterCd="00060") \%>\% dplyr::rename(discharge_cfs=X_00060_00003, disch_code=X_00060_00003_cd)# Parameter code 00060 = discharge in cfs. see also ?readNWISuv() to read high frequency values
-gauge_data$month=lubridate::month(gauge_data$Date)
-seasons=data.frame(c("Summer","Summer","Summer", "Fall", "Fall", "Fall", "Winter", "Winter", "Winter", "Spring", "Spring", "Spring"), c(7,8,9,10,11,12,1,2,3,4,5,6))
-names(seasons)=c("season", "month")
-gauge_data=merge(gauge_data, seasons, all.x=T)
-
-multi_site_seasonal_1Q10=plyr::ddply(gauge_data, .variables=c("site_no","season"), .fun="nQy", n=1, y=10) # Note additional arguments to ddply will be passed to the nQy function
-multi_site_seasonal_1Q10
 }
