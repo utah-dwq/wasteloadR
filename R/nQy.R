@@ -10,6 +10,7 @@
 #' @importFrom lubridate year
 #' @importFrom zoo rollmean
 #' @importFrom moments skewness
+#' @import ggplot2
 #' @examples
 #' # Basic usage
 #' ## Get data
