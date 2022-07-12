@@ -9,6 +9,7 @@
 #' @import dplyr
 #' @importFrom lubridate year
 #' @importFrom zoo rollmean
+#' @importFrom moments skewness
 #' @examples
 #' # Basic usage
 #' ## Get data
