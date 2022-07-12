@@ -5,7 +5,7 @@
 #' @param y Numeric. Recurrence interval in years
 #' @param date_col Column name containing date values. Must be in standard "YYYY-MM-DD" date format.
 #' @param q_col Column name containing discharge values. Any appropriate discharge units are OK. The result will be in the same units as the input.
-#' @return Either a numeric value of nQy or a dataframe of minimum annual n-day average discharge values.
+#' @return Returns a list of results including the calculated nQy statistic, a data frame of annual n-day flow minima and distribution information, and a plot to examine the fit.
 #' @import dplyr
 #' @importFrom lubridate year
 #' @importFrom zoo::rollmean
