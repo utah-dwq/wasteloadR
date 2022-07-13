@@ -1,0 +1,334 @@
+---
+title: "AMMTOX"
+author: "Nicholas von Stackelberg"
+date: '2022-06-13'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(ggplot2)
+library(stats)
+library(tidyverse)
+```
+
+
+
+```{r}
+# Input data
+
+# Dataframe with sources
+columns = c("Source_Name", "Distance_mi", "Source_Season", "Source_Flow_cfs", "Source_WTemp_degC", "Source_pH", "Source_NH3_mgN/l")
+ChronicSources <- data.frame(matrix(nrow=0, ncol=length(columns)))
+colnames(ChronicSources) <- columns
+# Receiving water - Flow, NH3, WTemp, pH
+ChronicSources[1,] = list("Upstream Ambient", 0, "Summer", 1.0, 20.0, 8.0, 0.20)
+# Effluent - Flow, WTemp, pH
+ChronicLimit <- 2.0
+ChronicSources[nrow(ChronicSources) + 1,] <- list("WWTP", 0.1, "Summer", 1.0, 22.2, 7.5, ChronicLimit)
+# Beneficial use - 3A, 3B, 3C, 3D
+# ELS Present - Yes or No
+ELSPresent <- "YES"
+
+# Dataframe with sources
+columns = c("Source_Name", "Criteria_Type", "Season", "Distance_mi", "Source_Flow_cfs", "Source_WTemp_degC", "Source_pH", "Source_NH3_mgN/l")
+Sources <- data.frame(matrix(nrow=0, ncol=length(columns)))
+colnames(Sources) <- columns
+# Receiving water - Flow, NH3, WTemp, pH
+Sources[1,] = list("Upstream Ambient", "Chronic", "Summer", 0, 1.0, 20.0, 8.0, 0.20)
+Sources[nrow(Sources) + 1,] = list("Upstream Ambient", "Acute", "Summer", 0, 1.0, 20.0, 8.0, 0.20)
+# Effluent - Flow, WTemp, pH
+Sources[nrow(Sources) + 1,] <- list("WWTP", "Chronic", "Summer", 0.1, 1.0, 22.2, 7.5, 2.0)
+Sources[nrow(Sources) + 1,] <- list("WWTP", "Acute", "Summer", 0.1, 2.0, 25.2, 7.8, 2.0)
+# Beneficial use - 3A, 3B, 3C, or 3D
+BU <- "3A"
+# ELS Present - Yes or No
+ELSPresent <- "YES"
+
+# Chronic mix width, %
+ChronMix <- 100
+# Acute mix width, %
+AcuteMix <- 50
+
+
+```
+
+```{r}
+# Model parameters
+Dist_Incr_mi <- 0.1 # Downstream distance increment
+Dist_Total_mi <- 20.0 # Total distance downstream in receiving water
+WTemp_Rebound_Rate <- 0.7 # Temperature rebound rate (C/mi), 0.7 is the default from the AMMTOX Technical Manual
+pH_Rebound_Rate <- 0.2 # pH rebound rate (units/mi), 0.2 is the default from the AMMTOX Technical Manual
+V_Coeff <- 0.30 # Velocity equation (v=aQ^b) a coefficient
+V_Exp <- 0.40 # Velocity equation (v=aQ^b) b coefficient 
+Seep_Rate <- 0.00 # Seepage accrual rate (cfs/mi)
+Seep_Ammonia <- 0.00 # Seepage ammonia concentration (mg/l)
+K3 <- 4.30 # Ammonia removal rate K3 at 20C (/day)
+Theta_K3 <- 1.080 # Ammonia removal rate temperature adjustment factor
+		
+		# FAV, Salmonids Present = 11.23 
+		# FAV, Salmonids Absent = 16.80 
+		# FAV in use = 16.80: FAV; if(Salmonids Present = Y, FAV, Salmonids Present, if(Salmonids Present = N, FAV, Salmonids Absent, NA))
+		# R, acute = 0.00704: R_Acute
+		# R, chronic = 0.02320: R_Chronic
+		# pHT, acute = 7.204: pHT_Acute
+		# pHT, chronic = 7.688: pHT_Chronic
+		# B, acute = 6.946: B_Acute: = 1/(R_Acute/(1+10^(pHT_Acute-8))+1/(1+10^(8-pHT_Acute)))
+		# B, chronic = 2.913: B_Chronic: = 1/(R_Chronic/(1+10^(pHT_Chronic-8))+1/(1+10^(8-pHT_Chronic)))
+		# Fish GMCV (ELS) = 2.85 
+		# Fish GMCV (no ELS) = 8.78 
+		# Fish GMCV in use in July = 2.85: Fish_GMCV; if(ELS Present = Y, Fish GMCV (ELS), if(ELS Present = N, Fish GMCV (no ELS), NA))
+		# invertebrate GMCV = 1.45: Invert_GMCV
+		# invertebrate slope = 0.028: Invert_slope
+		# invertebrate reference Temp = 25: Invert_Ref_T
+		# invertebrate low temp cutoff = 7: Invert_T_Cutoff
+		# Adjustment Factor = 0.854: Adjustment_Factor
+```
+
+
+```{r}
+# Calculate setpoint - critical pH and water temperature
+# AMMTOX Recur Model or inputs
+
+Setpoint_WTemp_degC <- 20.0
+Setpoint_pH <- 8.0
+
+```
+
+```{r}
+# Functions
+
+# Function to calculate NH3 concentration in receiving water
+CalcNH3Conc <- function (PointSourceNH3, Model) {
+
+  # Set ammonia concentration of point source
+  Model$`Source_NH3_mgN/l`[2]=PointSourceNH3
+
+  # Calculate mixed ammonia concentration with decay
+  Model$`NH3_mgN/L_Initial` <- Model$`Source_NH3_mgN/l`
+  Model$`NH3Decay_mgN/L` <- 0
+  Model$`NH3_mgN/L_Final` <- Model$`Source_NH3_mgN/l`
+  for(i in 2:nrow(Model)){
+    Model$`NH3_mgN/L_Initial`[i] <- (Model$Source_Flow_cfs[i] * Model$`Source_NH3_mgN/l`[i] + 
+                                              Model$Flow_cfs[i-1] * Model$`NH3_mgN/L_Final`[i-1])/Model$Flow_cfs[i]
+    Model$`NH3Decay_mgN/L`[i] <- Model$`NH3_mgN/L_Initial`[i]*(1-exp(-Model$`K3T_/d`[i]*Model$TravelTime_day[i]))
+    Model$`NH3_mgN/L_Final`[i] <- max(Model$`NH3_mgN/L_Initial`[i]-Model$`NH3Decay_mgN/L`[i],0)
+    }
+  Model$DeltaNH3 <- Model$`NH3_mgN/L_Final` - Model$`Criterion_NH3_mgN/L`
+  MaxDeltaNH3 <- max(Model$DeltaNH3[2:nrow(Model)])
+  return(MaxDeltaNH3)
+}
+
+# Goal seek to determine ammonia limits
+# Function for optimize to determine NH3 limit
+CalcLim <- function(PointSourceNH3, Target=0) {
+  abs(CalcNH3Conc(PointSourceNH3, Model) - Target)
+}
+
+# Function to calculate NH3 concentration with point source NH3 limit specified
+CalcMod <- function (PointSourceNH3, Model) {
+
+  # Set ammonia concentration of point source
+  Model$`Source_NH3_mgN/l`[2]=PointSourceNH3
+
+  # Calculate mixed ammonia concentration with decay
+  Model$`NH3_mgN/L_Initial` <- Model$`Source_NH3_mgN/l`
+  Model$`NH3Decay_mgN/L` <- 0
+  Model$`NH3_mgN/L_Final` <- Model$`Source_NH3_mgN/l`
+  for(i in 2:nrow(Model)){
+    Model$`NH3_mgN/L_Initial`[i] <- (Model$Source_Flow_cfs[i] * Model$`Source_NH3_mgN/l`[i] + 
+                                              Model$Flow_cfs[i-1] * Model$`NH3_mgN/L_Final`[i-1])/Model$Flow_cfs[i]
+    Model$`NH3Decay_mgN/L`[i] <- Model$`NH3_mgN/L_Initial`[i]*(1-exp(-Model$`K3T_/d`[i]*Model$TravelTime_day[i]))
+    Model$`NH3_mgN/L_Final`[i] <- max(Model$`NH3_mgN/L_Initial`[i]-Model$`NH3Decay_mgN/L`[i],0)
+    }
+  Model$DeltaNH3 <- Model$`NH3_mgN/L_Final` - Model$`Criterion_NH3_mgN/L`
+  return(Model)
+}
+
+# Function fo plot NH3 concentration
+PlotLimits <- function(Model) {
+  ggplot(Model, aes(Distance_mi, `NH3_mgN/L_Final`, color="Concentration")) +
+    geom_line() +
+    geom_line(aes(Distance_mi, `Criterion_NH3_mgN/L`, color="Criterion")) +
+    ylab("NH3 (mgN/L)") +
+    xlab("Distance (mi)") +
+    ggtitle(paste(Model$Criteria_Type[1], "Ammonia - ", Model$Season[1])) +
+    labs(color="NH3") +
+    scale_color_manual(values=c("grey", "red")) +
+    theme_minimal() +
+    theme(legend.position="bottom")
+}
+
+```
+
+```{r}
+# Mass balance mixing analysis 
+# AMMTOX Reach Model
+# Chronic limits
+ChronicModel <- data.frame(row.names = 1:201)
+ChronicModel <- ChronicModel %>%
+  mutate(Reach = seq(0, 200, by=1),
+         Distance_mi = seq(0, Dist_Total_mi, by=Dist_Incr_mi),
+         Criteria_Type="Chronic",
+         Season="Summer")
+# Merge Sources
+ChronicModel <- merge(ChronicModel, Sources, by = c("Criteria_Type", "Season", "Distance_mi"), all.x = TRUE)
+
+# Add seepage conditions?
+
+# Add beneficial use and ELS presence
+ChronicModel$BeneficialUse <- BU
+ChronicModel$ELSPresent <- ELSPresent
+
+# Mass balance mixing analysis
+# Calculate flow and travel time
+ChronicModel <- ChronicModel %>%
+  replace(is.na(.), 0) %>%
+  mutate(Flow_cfs = cumsum(replace_na(Source_Flow_cfs,0)),
+         Velocity_fps=V_Coeff*Flow_cfs^V_Exp,
+         TravelTime_day=5280*0.1/Velocity_fps/86400)
+         
+# Calculate water temperature and pH rebound
+ChronicModel <- ChronicModel %>%
+  mutate(Rebound_WTemp_degC = WTemp_Rebound_Rate * Dist_Incr_mi,
+         Rebound_pH = pH_Rebound_Rate * Dist_Incr_mi)
+
+# Calculate mixed water temperature with rebound
+ChronicModel$WTemp_degC <- ChronicModel$Source_WTemp_degC
+for(i in 2:nrow(ChronicModel)){
+  ChronicModel$WTemp_degC[i] <- (ChronicModel$Source_Flow_cfs[i] * ChronicModel$Source_WTemp_degC[i] + 
+                                   ChronicModel$Flow_cfs[i-1] * ChronicModel$WTemp_degC[i-1])/ChronicModel$Flow_cfs[i]
+  ChronicModel$WTemp_degC[i] <- ifelse(ChronicModel$WTemp_degC[i] < Setpoint_WTemp_degC,
+                                  min(ChronicModel$WTemp_degC[i] + ChronicModel$Rebound_WTemp_degC[i], Setpoint_WTemp_degC),
+                                  max(ChronicModel$WTemp_degC[i] - ChronicModel$Rebound_WTemp_degC[i], Setpoint_WTemp_degC))
+}
+
+# Calculate mixed pH with rebound
+ChronicModel$pH <- ChronicModel$Source_pH
+for(i in 2:nrow(ChronicModel)){
+  ChronicModel$pH[i] <- -log10((ChronicModel$Source_Flow_cfs[i] * 10^(-ChronicModel$Source_pH[i]) + 
+                                   ChronicModel$Flow_cfs[i-1] * 10^(-ChronicModel$pH[i-1]))/ChronicModel$Flow_cfs[i])
+
+  ChronicModel$pH[i] <- ifelse(ChronicModel$pH[i] < Setpoint_pH,
+                               min(ChronicModel$pH[i] + ChronicModel$Rebound_pH[i], Setpoint_pH),
+                               max(ChronicModel$pH[i] - ChronicModel$Rebound_pH[i], Setpoint_pH))
+}
+
+# Calculate water temperature corrected ammonia decay rate
+ChronicModel <- ChronicModel %>%
+  mutate(`K3T_/d`=K3*Theta_K3^(WTemp_degC-20))
+
+# Calculate ammonia criterion
+ChronicModel <- ChronicModel %>%
+  mutate(`Criterion_NH3_mgN/L`=ifelse(ELSPresent=="YES",
+                                      (0.0577/(1+10^(7.688-pH))+2.487/(1+10^(pH-7.688)))*min(2.85, 1.45*10^(0.028*(25-WTemp_degC))),
+                                      (0.0577/(1+10^(7.688-pH))+2.487/(1+10^(pH-7.688)))*1.45*10^(0.028*(25-max(WTemp_degC, 7)))))
+
+# ChronicModel$`Criterion_NH3_mgN/L` <- ifelse(ChronicModel$ELSPresent=="YES",
+#                                       (0.0577/(1+10^(7.688-ChronicModel$pH))+2.487/(1+10^(ChronicModel$pH-7.688)))*min(2.85, 1.45*10^(0.028*(25-ChronicModel$WTemp_degC))),
+#                                     (0.0577/(1+10^(7.688-ChronicModel$pH))+2.487/(1+10^(ChronicModel$pH-7.688)))*1.45*10^(0.028*(25-max(ChronicModel$WTemp_degC, 7))))
+
+# # Calculate mixed ammonia concentration with decay
+# ChronicModel$`NH3_mgN/L_Initial` <- ChronicModel$`Source_NH3_mgN/l`
+# ChronicModel$`NH3Decay_mgN/L` <- 0
+# ChronicModel$`NH3_mgN/L_Final` <- ChronicModel$`Source_NH3_mgN/l`
+# for(i in 2:nrow(ChronicModel)){
+#   ChronicModel$`NH3_mgN/L_Initial`[i] <- (ChronicModel$Source_Flow_cfs[i] * ChronicModel$`Source_NH3_mgN/l`[i] + 
+#                                    ChronicModel$Flow_cfs[i-1] * ChronicModel$`NH3_mgN/L_Final`[i-1])/ChronicModel$Flow_cfs[i]
+#   ChronicModel$`NH3Decay_mgN/L`[i] <- ChronicModel$`NH3_mgN/L_Initial`[i]*(1-exp(-ChronicModel$`K3T_/d`[i]*ChronicModel$TravelTime_day[i]))
+#   ChronicModel$`NH3_mgN/L_Final`[i] <- max(ChronicModel$`NH3_mgN/L_Initial`[i]-ChronicModel$`NH3Decay_mgN/L`[i],0) 
+# }
+# ChronicModel$DeltaNH3 <- ChronicModel$`NH3_mgN/L_Final` - ChronicModel$`Criterion_NH3_mgN/L`
+# MinDeltaNH3 <- min(abs(ChronicModel$DeltaNH3[2:nrow(ChronicModel)]))
+
+# Calculate chronic limits
+Model <- ChronicModel
+ChronicLimit <- optimize(CalcLim, lower=0.1, upper=100, tol=0.01)
+
+# Calculate NH3 concentration
+ChronicModel <- CalcMod(PointSourceNH3=ChronicLimit[[1]], Model=ChronicModel)
+
+# Plot NH3
+PlotLimits(Model=ChronicModel)
+
+#write.csv(ChronicModel, "Output/ChronicModel.csv", row.names = FALSE)
+
+```
+
+```{r}
+# Mass balance mixing analysis 
+# AMMTOX Reach Model
+# Acute limits
+AcuteModel <- ChronicModel %>%
+  dplyr::select(Reach, BeneficialUse, ELSPresent, Distance_mi) %>%
+  mutate(Criteria_Type="Acute",
+         Season="Summer")
+# Merge Sources
+AcuteModel <- merge(AcuteModel, Sources, by = c("Criteria_Type", "Season", "Distance_mi"), all.x = TRUE)
+
+# Add seepage conditions?
+
+# Mass balance mixing analysis
+# Calculate flow and travel time
+AcuteModel <- AcuteModel %>%
+  replace(is.na(.), 0) %>%
+  mutate(Flow_cfs = cumsum(replace_na(Source_Flow_cfs,0)),
+         Velocity_fps=V_Coeff*Flow_cfs^V_Exp,
+         TravelTime_day=5280*0.1/Velocity_fps/86400)
+
+# Adjust flow for acute mix width
+AcuteModel$Source_Flow_cfs[1] <- AcuteModel$Source_Flow_cfs[1]*AcuteMix/100
+AcuteModel$Flow_cfs <- cumsum(AcuteModel$Source_Flow_cfs)
+         
+# Calculate water temperature and pH rebound
+AcuteModel <- AcuteModel %>%
+  mutate(Rebound_WTemp_degC = WTemp_Rebound_Rate * Dist_Incr_mi,
+         Rebound_pH = pH_Rebound_Rate * Dist_Incr_mi)
+
+# Calculate mixed water temperature with rebound
+AcuteModel$WTemp_degC <- AcuteModel$Source_WTemp_degC
+for(i in 2:nrow(AcuteModel)){
+  AcuteModel$WTemp_degC[i] <- (AcuteModel$Source_Flow_cfs[i] * AcuteModel$Source_WTemp_degC[i] + 
+                                 AcuteModel$Flow_cfs[i-1] * AcuteModel$WTemp_degC[i-1])/AcuteModel$Flow_cfs[i]
+  ChronicModel$WTemp_degC[i] <- ifelse(AcuteModel$WTemp_degC[i] < Setpoint_WTemp_degC,
+                                  min(AcuteModel$WTemp_degC[i] + AcuteModel$Rebound_WTemp_degC[i], Setpoint_WTemp_degC),
+                                  max(AcuteModel$WTemp_degC[i] - AcuteModel$Rebound_WTemp_degC[i], Setpoint_WTemp_degC))
+}
+
+# Calculate mixed pH with rebound
+AcuteModel$pH <- AcuteModel$Source_pH
+for(i in 2:nrow(AcuteModel)){
+  AcuteModel$pH[i] <- -log10((AcuteModel$Source_Flow_cfs[i] * 10^(-AcuteModel$Source_pH[i]) + 
+                                   AcuteModel$Flow_cfs[i-1] * 10^(-AcuteModel$pH[i-1]))/AcuteModel$Flow_cfs[i])
+
+  AcuteModel$pH[i] <- ifelse(AcuteModel$pH[i] < Setpoint_pH,
+                               min(AcuteModel$pH[i] + AcuteModel$Rebound_pH[i], Setpoint_pH),
+                               max(AcuteModel$pH[i] - AcuteModel$Rebound_pH[i], Setpoint_pH))
+}
+
+# Calculate water temperature corrected ammonia decay rate
+AcuteModel <- AcuteModel %>%
+  mutate(`K3T_/d`=K3*Theta_K3^(WTemp_degC-20))
+
+# Calculate ammonia criterion
+AcuteModel <- AcuteModel %>%
+  mutate(`Criterion_NH3_mgN/L`=ifelse(BeneficialUse=="3A",
+                                      0.275/(1+10^(7.204-pH))+39/(1+10^(pH-7.204)),
+                                      0.411/(1+10^(7.204-pH))+(58.4/(1+10^(pH-7.204)))))
+
+# Calculate acute limits
+Model <- AcuteModel
+AcuteLims <- optimize(CalcLim, lower=0.1, upper=100, tol=0.01)
+
+# Calculate NH3 concentration
+AcuteModel <- CalcMod(PointSourceNH3=AcuteLims[[1]], Model=AcuteModel)
+
+print(AcuteLims[[1]])
+
+# Plot NH3
+PlotLimits(Model=AcuteModel)
+
+#write.csv(ChronicModel, "Output/ChronicModel.csv", row.names = FALSE)
+
+```
