@@ -9,6 +9,7 @@
 #' @return Returns a list of results including the calculated nQy statistics (from fitted probability and 1/y percentile), a data frame of annual n-day flow minima and distribution information, and a plot to examine the fit.
 #' @import dplyr
 #' @importFrom lubridate year
+#' @importFrom wqTools waterYear
 #' @importFrom zoo rollmean
 #' @importFrom moments skewness
 #' @import ggplot2
@@ -78,7 +79,7 @@ nQy = function(data, n=7, y=10, date_col="Date", q_col="discharge_cfs", plot_fit
 
 	# Calculate min annual Q values
 	q_ann_mins <- rolled_means %>% 
-						mutate(year = wasteloadR::waterYear(date)) %>%
+						mutate(year = wqTools::waterYear(date)) %>%
                         group_by(year) %>%
                         summarize(minQ = min(ndaymean, na.rm = T), 
                                   lenDat = length(q),
@@ -86,7 +87,7 @@ nQy = function(data, n=7, y=10, date_col="Date", q_col="discharge_cfs", plot_fit
                         filter(lenDat > 328 & lenNAs / lenDat < 0.1) # Only include years missing less than 10% of each year and 10% or fewer NAs
 	
 	# Check for removed years
-	all_years=unique(wasteloadR::waterYear(data$date))
+	all_years=unique(wqTools::waterYear(data$date))
 	included_years=unique(q_ann_mins$year)
 	removed_years=all_years[!all_years %in% included_years]
 	
