@@ -1,11 +1,12 @@
 #' Generate low flow statistics (nQy) for wasteloads
 #'
-#' @param data Input data. Should be a dataframe of daily discharge values
+#' Calculates n-day rolling averages & minimum annual n-day averages, fits a probability distribution to minimum annual average flows, and calculates low flow statistics (nQy) for discharge data.
+#' @param data Input data. A dataframe columns of daily discharge values and dates.
 #' @param n Numeric. Days for rolling time period averages. Default 7.
 #' @param y Numeric. Recurrence interval in years
 #' @param date_col Column name containing date values. Must be in standard "YYYY-MM-DD" date format.
-#' @param q_col Column name containing discharge values. Any appropriate discharge units are OK. The result will be in the same units as the input.
-#' @return Returns a list of results including the calculated nQy statistic, a data frame of annual n-day flow minima and distribution information, and a plot to examine the fit.
+#' @param q_col Column name containing discharge values. Any appropriate and uniform discharge units are OK. The result will be in the same units as the input.
+#' @return Returns a list of results including the calculated nQy statistics (from fitted probability and 1/y percentile), a data frame of annual n-day flow minima and distribution information, and a plot to examine the fit.
 #' @import dplyr
 #' @importFrom lubridate year
 #' @importFrom zoo rollmean
@@ -15,7 +16,7 @@
 #' # Basic usage
 #' ## Get data
 #' library(dplyr)
-#' gauge_data=dataRetrieval::readNWISdv(siteNumbers="10171000", startDate="2000-01-01", parameterCd="00060") %>% dplyr::rename(discharge_cfs=X_00060_00003, disch_code=X_00060_00003_cd)# Parameter code 00060 = discharge in cfs. see also ?readNWISuv() to read high frequency values
+#' gauge_data=dataRetrieval::readNWISdv(siteNumbers="10171000", startDate="2000-01-01", parameterCd="00060") %>% dplyr::rename(discharge_cfs=X_00060_00003)# Parameter code 00060 = discharge in cfs.
 #' ### Also try wqTools::findSites() to find other gauge locations.
 #' 
 #' ## Run the function
@@ -52,6 +53,11 @@ nQy = function(data, n=7, y=10, date_col="Date", q_col="discharge_cfs", plot_fit
 	# Reduce columns
 	data=data[,c(date_col, q_col)]
 	names(data)=c("date","q")
+
+	if(class(data$date) != "Date"){
+		stop("Input date column must be date class.")
+	}
+
 	
 	# Check for multiple q values on single date ,summarize as needed
 	if(any(table(data$date)>1)){
@@ -72,7 +78,7 @@ nQy = function(data, n=7, y=10, date_col="Date", q_col="discharge_cfs", plot_fit
 
 	# Calculate min annual Q values
 	q_ann_mins <- rolled_means %>% 
-						mutate(year = lubridate::year(date)) %>%
+						mutate(year = wasteloadR::waterYear(date)) %>%
                         group_by(year) %>%
                         summarize(minQ = min(ndaymean, na.rm = T), 
                                   lenDat = length(q),
@@ -80,7 +86,7 @@ nQy = function(data, n=7, y=10, date_col="Date", q_col="discharge_cfs", plot_fit
                         filter(lenDat > 328 & lenNAs / lenDat < 0.1) # Only include years missing less than 10% of each year and 10% or fewer NAs
 	
 	# Check for removed years
-	all_years=unique(lubridate::year(data$date))
+	all_years=unique(wasteloadR::waterYear(data$date))
 	included_years=unique(q_ann_mins$year)
 	removed_years=all_years[!all_years %in% included_years]
 	
@@ -126,7 +132,7 @@ nQy = function(data, n=7, y=10, date_col="Date", q_col="discharge_cfs", plot_fit
 	nQy_pctile=quantile(q_ann_mins$minQ, (1/y))
 	
 	# Print results
-	print(paste0("Years excluded from analysis due insufficient data: "))
+	print(paste0("Water years excluded from analysis due insufficient data: "))
 	print(removed_years)
 	print(paste0("Number of zero minimum annual flow values: ", dim(subset(q_ann_mins, minQ==0))[1]))
 	print(paste0("Low flow statistic ", n, "Q", y, " fitted: ", round(nQy_fitted,2)))
