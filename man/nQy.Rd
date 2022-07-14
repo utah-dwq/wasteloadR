@@ -14,7 +14,7 @@ nQy(
 )
 }
 \arguments{
-\item{data}{Input data. Should be a dataframe of daily discharge values}
+\item{data}{Input data. A dataframe columns of daily discharge values and dates.}
 
 \item{n}{Numeric. Days for rolling time period averages. Default 7.}
 
@@ -22,19 +22,19 @@ nQy(
 
 \item{date_col}{Column name containing date values. Must be in standard "YYYY-MM-DD" date format.}
 
-\item{q_col}{Column name containing discharge values. Any appropriate discharge units are OK. The result will be in the same units as the input.}
+\item{q_col}{Column name containing discharge values. Any appropriate and uniform discharge units are OK. The result will be in the same units as the input.}
 }
 \value{
-Returns a list of results including the calculated nQy statistic, a data frame of annual n-day flow minima and distribution information, and a plot to examine the fit.
+Returns a list of results including the calculated nQy statistics (from fitted probability and 1/y percentile), a data frame of annual n-day flow minima and distribution information, and a plot to examine the fit.
 }
 \description{
-Generate low flow statistics (nQy) for wasteloads
+Calculates n-day rolling averages & minimum annual n-day averages, fits a probability distribution to minimum annual average flows, and calculates low flow statistics (nQy) for discharge data.
 }
 \examples{
 # Basic usage
 ## Get data
 library(dplyr)
-gauge_data=dataRetrieval::readNWISdv(siteNumbers="10171000", startDate="2000-01-01", parameterCd="00060") \%>\% dplyr::rename(discharge_cfs=X_00060_00003, disch_code=X_00060_00003_cd)# Parameter code 00060 = discharge in cfs. see also ?readNWISuv() to read high frequency values
+gauge_data=dataRetrieval::readNWISdv(siteNumbers="10171000", startDate="2000-01-01", parameterCd="00060") \%>\% dplyr::rename(discharge_cfs=X_00060_00003)# Parameter code 00060 = discharge in cfs.
 ### Also try wqTools::findSites() to find other gauge locations.
 
 ## Run the function
