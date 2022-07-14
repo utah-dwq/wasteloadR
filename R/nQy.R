@@ -98,7 +98,7 @@ nQy = function(data, n=7, y=10, date_col="Date", q_col="discharge_cfs", plot_fit
 	## Measures of the distribution
 	Xbar <- mean(log10(q_ann_mins$minQ_zerofilled))
 	S    <- sd(log10(q_ann_mins$minQ_zerofilled))
-	g    <- skewness(log10(q_ann_mins$minQ_zerofilled))
+	g    <- moments::skewness(log10(q_ann_mins$minQ_zerofilled))
 	
 	## Calculate z, K, to plot the fitted Pearson Type III
 	q_ann_mins <- q_ann_mins %>% 
@@ -116,21 +116,24 @@ nQy = function(data, n=7, y=10, date_col="Date", q_col="discharge_cfs", plot_fit
 		ylab("n day yearly minimum")+
 		xlab("Return interval")
 	
-	if(plot_fit){fit_plot}
+	if(plot_fit){plot(fit_plot)}
 	
-	# Calculate nQy stat
+	# Calculate nQy stats
 	z    <- 4.91 * ((1 / y) ^ 0.14 - (1 - 1 / y) ^ 0.14)
 	K    <- (2 / g) * (((1 + (g * z) / 6 - (g ^ 2) / 36) ^ 3) - 1) 
-	nQy <- 10^(Xbar + K * S)
+	nQy_fitted <- 10^(Xbar + K * S)
+	
+	nQy_pctile=quantile(q_ann_mins$minQ, (1/y))
 	
 	# Print results
 	print(paste0("Years excluded from analysis due insufficient data: "))
 	print(removed_years)
 	print(paste0("Number of zero minimum annual flow values: ", dim(subset(q_ann_mins, minQ==0))[1]))
-	print(paste0("Low flow statistic ", n, "Q", y, ": ", round(nQy,2)))
-	
+	print(paste0("Low flow statistic ", n, "Q", y, " fitted: ", round(nQy_fitted,2)))
+	print(paste0("Low flow statistic ", n, "Q", y, " percentile: ", round(nQy_pctile,2)))
+
 	# Return results
-	results=list("nQy"=nQy, "fit_plot"=fit_plot, "annual_mins_fit"=q_ann_mins[order(q_ann_mins$rank),])
+	results=list("nQy_fitted"=nQy_fitted, "nQy_pctile"=nQy_pctile, "fit_plot"=fit_plot, "annual_mins_fit"=q_ann_mins[order(q_ann_mins$rank),])
 	return(results)
 	
 }
