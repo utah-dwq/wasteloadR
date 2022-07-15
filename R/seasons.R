@@ -20,7 +20,7 @@ seasons=function(dates, seasons=list("winter"=c(1,2,3), "spring"=c(4,5,6), "summ
 	date_month=data.frame(dates, lubridate::month(dates))
 	names(date_month)=c("date","month")
 
-	month_seasons=dplyr::left_join(date_month, seasons_df)
+	month_seasons=dplyr::left_join(date_month, seasons_df, by = "month")
 
 	return(month_seasons$season)
 }
