@@ -6,6 +6,7 @@
 #' @param y Numeric. Recurrence interval in years
 #' @param date_col Column name containing date values. Must be in standard "YYYY-MM-DD" date format.
 #' @param q_col Column name containing discharge values. Any appropriate and uniform discharge units are OK. The result will be in the same units as the input.
+#' @param min_days Minimum number of days required to include a year in the n-day annual minima. Recommend 328 for annual statistics and 82 for seasonal (~10%).
 #' @return Returns a list of results including the calculated nQy statistics (from fitted probability and 1/y percentile), a data frame of annual n-day flow minima and distribution information, and a plot to examine the fit.
 #' @import dplyr
 #' @importFrom lubridate year
@@ -30,7 +31,7 @@
 #' 
 
 #' @export
-nQy = function(data, n=7, y=10, date_col="Date", q_col="discharge_cfs", plot_fit=TRUE){
+nQy = function(data, n=7, y=10, date_col="Date", q_col="discharge_cfs", min_days=328, plot_fit=TRUE){
 
 	# Function outline:
 	## Data checks - multiple values on 1 day, implicit NAs
@@ -43,13 +44,16 @@ nQy = function(data, n=7, y=10, date_col="Date", q_col="discharge_cfs", plot_fit
 	## Export results
 
 	# Development set up
-	#gauge_data=dataRetrieval::readNWISdv(siteNumbers=c("10141000"), startDate="1970-01-01", parameterCd="00060") %>% dplyr::rename(discharge_cfs=X_00060_00003, disch_code=X_00060_00003_cd)
-	#data=gauge_data
-	#date_col="Date"
-	#q_col="discharge_cfs"
-	#n=7
-	#y=10
-	#plot_fit=TRUE
+	##gauge_data=dataRetrieval::readNWISdv(siteNumbers=c("10141000"), startDate="1970-01-01", parameterCd="00060") %>% dplyr::rename(discharge_cfs=X_00060_00003, disch_code=X_00060_00003_cd)
+	###gauge_data$season=seasons(gauge_data$Date)
+	###gauge_data=subset(gauge_data, season=="winter")
+	##data=gauge_data
+	##date_col="Date"
+	##q_col="discharge_cfs"
+	##min_days=328
+	##n=7
+	##y=10
+	##plot_fit=TRUE
 	
 	# Reduce columns
 	data=data[,c(date_col, q_col)]
@@ -82,9 +86,8 @@ nQy = function(data, n=7, y=10, date_col="Date", q_col="discharge_cfs", plot_fit
 						mutate(year = wqTools::waterYear(date)) %>%
                         group_by(year) %>%
                         summarize(minQ = min(ndaymean, na.rm = T), 
-                                  lenDat = length(q),
-                                  lenNAs = sum(is.na(ndaymean))) %>%
-                        filter(lenDat > 328 & lenNAs / lenDat < 0.1) # Only include years missing less than 10% of each year and 10% or fewer NAs
+								  days_count=length(q[!is.na(q)])) %>%
+                        filter(days_count>=min_days) # Only include years meeting min_days argument
 	
 	# Check for removed years
 	all_years=unique(wqTools::waterYear(data$date))
@@ -133,8 +136,10 @@ nQy = function(data, n=7, y=10, date_col="Date", q_col="discharge_cfs", plot_fit
 	nQy_pctile=quantile(q_ann_mins$minQ, (1/y))
 	
 	# Print results
-	print(paste0("Water years excluded from analysis due insufficient data: "))
-	print(removed_years)
+	if(length(removed_years)>0){
+		print(paste0("Water years excluded from analysis due insufficient data: "))
+		print(removed_years)
+	}
 	print(paste0("Number of zero minimum annual flow values: ", dim(subset(q_ann_mins, minQ==0))[1]))
 	print(paste0("Low flow statistic ", n, "Q", y, " fitted: ", round(nQy_fitted,2)))
 	print(paste0("Low flow statistic ", n, "Q", y, " percentile: ", round(nQy_pctile,2)))
