@@ -1,0 +1,3 @@
+name: Low flow analysis
+create_dir: true
+description: Template for conducting low flow analysis on USGS gauge data for wasteloads.
