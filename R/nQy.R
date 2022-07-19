@@ -97,6 +97,8 @@ nQy = function(data, n=7, y=10, date_col="Date", q_col="discharge_cfs", min_days
 	# Fill zeros in q_ann_mins (need to test w/ Weber River site)
 	q_ann_mins$minQ_zerofilled=q_ann_mins$minQ
 	q_ann_mins$minQ_zerofilled[q_ann_mins$minQ_zerofilled==0]=min(q_ann_mins$minQ[q_ann_mins$minQ!=0])/2 # Zeros filled w/ half of non-zero mins
+	## Note, this is not the same approach as USGS SWToolbox, still exploring options here
+	### pubs.usgs.gov/tm/04/a11/tm4a11.pdf
 	
 	# add rank column and return interval column
 	q_ann_mins <- q_ann_mins %>% 
@@ -105,6 +107,7 @@ nQy = function(data, n=7, y=10, date_col="Date", q_col="discharge_cfs", min_days
                 mutate(ExceedProb = 1 / ReturnInterval)
 
 	# Fit probability distribution
+	## See https://vt-hydroinformatics.github.io/lfas.html#fit-to-pearson-type-iii-distribution for useful info on fitting distributions and calculating nQy.
 	## Measures of the distribution
 	Xbar <- mean(log10(q_ann_mins$minQ_zerofilled))
 	S    <- sd(log10(q_ann_mins$minQ_zerofilled))
@@ -124,7 +127,8 @@ nQy = function(data, n=7, y=10, date_col="Date", q_col="discharge_cfs", min_days
 		theme_classic()+
 		scale_x_log10()+
 		ylab("n day yearly minimum")+
-		xlab("Return interval")
+		xlab("Return interval")+
+		labs(colour="")
 	
 	if(plot_fit){plot(fit_plot)}
 	
