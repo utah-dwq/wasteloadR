@@ -28,6 +28,7 @@ library(wqTools)
 library(wasteloadR)
 library(dplyr)
 library(plotly)
+library(knitr)
 ```
 
 # Read USGS gauge data daily discharge values
@@ -40,9 +41,18 @@ You can customize your query date range here, or query the full record
 and subset later after examining the daily values data.
 
 ```{r, read-gauge}
-gauge_data=dataRetrieval::readNWISdv(siteNumbers='10171000',
-  startDate='1989-10-01', parameterCd='00060') %>% 
+### User Input Required ###
+Site <- "10171000" # Enter one USGS station number
+StartDate <- "1989-10-01" # Enter start date of gauge data download
+###
+
+gauge_data=dataRetrieval::readNWISdv(siteNumbers=Site,
+  startDate=StartDate, parameterCd='00060') %>% 
 	dplyr::rename(discharge_cfs=X_00060_00003)
+
+gauge_info <- readNWISsite(Site)
+
+SiteName <- gauge_info$station_nm[1]
 ```
 
 # Assign seasons and water year
@@ -63,12 +73,11 @@ Based on a visual inspection, you may want to subset the data down to a
 specific time period, make custom season assignments, or take other QAQC
 actions.
 
-```{r, timeseries, fig.cap='Jordan River 1700 S discharge time series.'}
+```{r, timeseries, fig.cap=paste0(SiteName, ' discharge time series.')}
 plot_ly(data=gauge_data, x=~Date, y=~discharge_cfs, type='scatter', mode='lines') %>% 
   layout(
     xaxis = list(title = ''),
-    yaxis = list(title = 'Discharge (cfs)'),
-    title = 'Jordan River 1700 S'
+    yaxis = list(title = 'Discharge (cfs)')
 	) %>% 	
 	config(displaylogo = FALSE,
 		modeBarButtonsToRemove = c(
@@ -82,7 +91,7 @@ plot_ly(data=gauge_data, x=~Date, y=~discharge_cfs, type='scatter', mode='lines'
 
 ```
 
-```{r, boxplots, fig.cap='Jordan River 1700 S annual, monthly, and seasonal boxplots.'}
+```{r, boxplots, fig.cap=paste0(SiteName, ' annual, monthly, and seasonal boxplots.')}
 plot_ly() %>% 
 	add_trace(data=gauge_data, type='box', x=~wateryear, y=~discharge_cfs) %>% 
   layout(title = "",
@@ -137,14 +146,21 @@ plot_ly() %>%
 Subset to water year 2000 through present.
 
 ```{r, subset-ex}
+### User Input Required ###
+SubStartDate <- "1989-10-01" # Enter start date of gauge data for use in low flow analysis
+###
+
 gauge_data=subset(gauge_data, Date>='1999-10-01')
 ```
 
 # Annual 7Q10
 
 ```{r, 7Q10}
-JR_1700S_7Q10 <- nQy(data=gauge_data, n=7, y=10, date_col='Date', 
+gauge_7Q10 <- nQy(data=gauge_data, n=7, y=10, date_col='Date', 
                      q_col='discharge_cfs', plot_fit=F, min_days=328)
+
+gauge_7Q10_annualnday <- gauge_7Q10$annual_mins_fit
+kable(gauge_7Q10_annualnday, caption=paste0(SiteName, " Annual nday Timeseries"), digits=3)
 ```
 
 # Examine annual 7Q10 fit plot
@@ -157,7 +173,9 @@ object and can be modified via normal ggplot methods. For example, here
 we add a custom title to the plot.
 
 ```{r, fit-plot, fig.cap="Jordan River 1700 S 7Q10 probability fit."}
-JR_1700S_7Q10$fit_plot + ggtitle('Jordan River 1700 S 7Q10 probability fit')
+gauge_7Q10$fit_plot + 
+  ggtitle(paste0(SiteName, ' Probability Fit Plot')) +
+  theme(legend.position="bottom")
 ```
 
 # Seasonal 7Q10s
@@ -168,10 +186,10 @@ appropriate min_days setting. In this case, we've divided the year into
 (365/4\*0.9 = 82).
 
 ```{r, seasonal-7Q10}
-JR_1700S_7Q10_winter=nQy(data=subset(gauge_data, season=='winter'), n=7, y=10, date_col='Date', q_col='discharge_cfs', plot_fit=F, min_days=82)
-JR_1700S_7Q10_spring=nQy(data=subset(gauge_data, season=='spring'), n=7, y=10, date_col='Date', q_col='discharge_cfs', plot_fit=F, min_days=82)
-JR_1700S_7Q10_summer=nQy(data=subset(gauge_data, season=='summer'), n=7, y=10, date_col='Date', q_col='discharge_cfs', plot_fit=F, min_days=82)
-JR_1700S_7Q10_fall=nQy(data=subset(gauge_data, season=='fall'), n=7, y=10, date_col='Date', q_col='discharge_cfs', plot_fit=F, min_days=82)
+gauge_7Q10_winter=nQy(data=subset(gauge_data, season=='winter'), n=7, y=10, date_col='Date', q_col='discharge_cfs', plot_fit=F, min_days=82)
+gauge_7Q10_spring=nQy(data=subset(gauge_data, season=='spring'), n=7, y=10, date_col='Date', q_col='discharge_cfs', plot_fit=F, min_days=82)
+gauge_7Q10_summer=nQy(data=subset(gauge_data, season=='summer'), n=7, y=10, date_col='Date', q_col='discharge_cfs', plot_fit=F, min_days=82)
+gauge_7Q10_fall=nQy(data=subset(gauge_data, season=='fall'), n=7, y=10, date_col='Date', q_col='discharge_cfs', plot_fit=F, min_days=82)
 ```
 
 # Irrigation/non-irrigation
@@ -180,13 +198,20 @@ Use the same approach as for seasonal values above. Modify the seasons
 and min_days as appropriate.
 
 ```{r, irrigation}
-gauge_data=gauge_data %>% mutate(irrigation=seasons(Date, seasons=list('y'=c(7,8,9,10,11,12), 'n'=c(1,2,3,4,5,6))))
-JR_1700S_7Q10_irr=nQy(data=subset(gauge_data, irrigation=='y'), n=7, y=10, date_col='Date', q_col='discharge_cfs', min_days=160)
-JR_1700S_7Q10_nonirr=nQy(data=subset(gauge_data, irrigation=='n'), n=7, y=10, date_col='Date', q_col='discharge_cfs', min_days=160)
+### User Input Required ###
+irrMonth <- c(5,6,7,8,9) # Enter months of irrigation season
+nonirrMonth <- c(1,2,3,4,10,11,12) # Enter months of non-irrigation season
+irrminDays <- 120 # Minimum number of days in season with data to include year in analysis
+nonirrminDays <- 160 # Minimum number of days in season with data to include year in analysis
+###
+
+gauge_data=gauge_data %>% mutate(irrigation=seasons(Date, seasons=list('y'=irrMonth, 'n'=nonirrMonth)))
+guage_irr=nQy(data=subset(gauge_data, irrigation=='y'), n=7, y=10, date_col='Date', q_col='discharge_cfs', min_days=irrminDays)
+gauge_7Q10_nonirr=nQy(data=subset(gauge_data, irrigation=='n'), n=7, y=10, date_col='Date', q_col='discharge_cfs', min_days=nonirrminDays)
 ```
 
 # Other nQy types
 
 ```{r, other-nqy}
-JR1700S_1Q10=nQy(data=gauge_data, n=1, y=10, date_col='Date', q_col='discharge_cfs')
+gauge_1Q10=nQy(data=gauge_data, n=1, y=10, date_col='Date', q_col='discharge_cfs')
 ```
