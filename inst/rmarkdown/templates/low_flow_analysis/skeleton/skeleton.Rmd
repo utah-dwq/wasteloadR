@@ -31,8 +31,7 @@ library(plotly)
 library(knitr)
 ```
 
-# Read USGS gauge data daily discharge values
-
+# User inputs
 Site number 10171000 is Jordan River at 1700 S. You can find appropriate
 gauge sites via USGS NWIS or with `wqTools::findSites()`. Parameter code
 00060 = discharge in cfs.
@@ -40,14 +39,15 @@ gauge sites via USGS NWIS or with `wqTools::findSites()`. Parameter code
 You can customize your query date range here, or query the full record
 and subset later after examining the daily values data.
 
-```{r, read-gauge}
-### User Input Required ###
+```{r, user-inputs}
 Site <- "10171000" # Enter one USGS station number
-StartDate <- "1989-10-01" # Enter start date of gauge data download
-###
+startDate <- "1989-10-01" # Enter start date of gauge data download
+```
 
+# Read USGS daily flow values and gauge info
+```{r, read-gauge}
 gauge_data=dataRetrieval::readNWISdv(siteNumbers=Site,
-  startDate=StartDate, parameterCd='00060') %>% 
+  startDate=startDate, parameterCd='00060') %>% 
 	dplyr::rename(discharge_cfs=X_00060_00003)
 
 gauge_info <- readNWISsite(Site)
@@ -143,13 +143,10 @@ plot_ly() %>%
 
 ```
 
-Subset to water year 2000 through present.
+Example: subset to water year 2000 through present
 
 ```{r, subset-ex}
-### User Input Required ###
 SubStartDate <- "1989-10-01" # Enter start date of gauge data for use in low flow analysis
-###
-
 gauge_data=subset(gauge_data, Date>='1999-10-01')
 ```
 
@@ -178,9 +175,11 @@ gauge_7Q10$fit_plot +
   theme(legend.position="bottom")
 ```
 
-# Seasonal 7Q10s
+# Other examples: seasonal and other nQys
+## Seasonal 7Q10s
 
-Subset your data to desired season and feed to nQy function. Use an
+To calculate seasonal or other custom nQy values, 
+subset your data to desired season and feed to nQy function. Use an
 appropriate min_days setting. In this case, we've divided the year into
 4 seasons, and want our min_days to be approximately 90% of a season
 (365/4\*0.9 = 82).
@@ -192,7 +191,7 @@ gauge_7Q10_summer=nQy(data=subset(gauge_data, season=='summer'), n=7, y=10, date
 gauge_7Q10_fall=nQy(data=subset(gauge_data, season=='fall'), n=7, y=10, date_col='Date', q_col='discharge_cfs', plot_fit=F, min_days=82)
 ```
 
-# Irrigation/non-irrigation
+## Irrigation/non-irrigation
 
 Use the same approach as for seasonal values above. Modify the seasons
 and min_days as appropriate.
@@ -210,7 +209,7 @@ guage_irr=nQy(data=subset(gauge_data, irrigation=='y'), n=7, y=10, date_col='Dat
 gauge_7Q10_nonirr=nQy(data=subset(gauge_data, irrigation=='n'), n=7, y=10, date_col='Date', q_col='discharge_cfs', min_days=nonirrminDays)
 ```
 
-# Other nQy types
+## Other nQy types (e.g. 1Q10)
 
 ```{r, other-nqy}
 gauge_1Q10=nQy(data=gauge_data, n=1, y=10, date_col='Date', q_col='discharge_cfs')
