@@ -58,7 +58,7 @@ SiteName <- gauge_info$station_nm[1]
 
 # Export raw gauge data
 ```{r, export-raw}
-write_xlsx(c(gauge_info=gauge_info, gauge_data=gauge_data), path="raw_gauge_data.xlsx")
+write_xlsx(list(gauge_info=gauge_info, gauge_data=gauge_data), path="raw_gauge_data.xlsx")
 ```
 
 
