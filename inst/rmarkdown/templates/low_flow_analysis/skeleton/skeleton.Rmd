@@ -29,6 +29,7 @@ library(wasteloadR)
 library(dplyr)
 library(plotly)
 library(knitr)
+library(writexl)
 ```
 
 # User inputs
@@ -48,12 +49,18 @@ startDate <- "1989-10-01" # Enter start date of gauge data download
 ```{r, read-gauge}
 gauge_data=dataRetrieval::readNWISdv(siteNumbers=Site,
   startDate=startDate, parameterCd='00060') %>% 
-	dplyr::rename(discharge_cfs=X_00060_00003)
+	dplyr::rename(discharge_cfs=X_00060_00003, discharge_qa_code=X_00060_00003_cd)
 
 gauge_info <- readNWISsite(Site)
 
 SiteName <- gauge_info$station_nm[1]
 ```
+
+# Export raw gauge data
+```{r, export-raw}
+write_xlsx(c(gauge_info=gauge_info, gauge_data=gauge_data), path="raw_gauge_data.xlsx")
+```
+
 
 # Assign seasons and water year
 Note - The seasons() function defines seasons as winter = c(1, 2, 3), spring = c(4, 5, 6), summer = c(7, 8, 9), fall = c(10, 11, 12) by default, but can be custom modified. See the irrigation/non-irrigation section for an example of custom season definitions.
@@ -175,8 +182,7 @@ gauge_7Q10$fit_plot +
   theme(legend.position="bottom")
 ```
 
-# Other examples: seasonal and other nQys
-## Seasonal 7Q10s
+# Seasonal 7Q10s
 
 To calculate seasonal or other custom nQy values, 
 subset your data to desired season and feed to nQy function. Use an
@@ -190,6 +196,8 @@ gauge_7Q10_spring=nQy(data=subset(gauge_data, season=='spring'), n=7, y=10, date
 gauge_7Q10_summer=nQy(data=subset(gauge_data, season=='summer'), n=7, y=10, date_col='Date', q_col='discharge_cfs', plot_fit=F, min_days=82)
 gauge_7Q10_fall=nQy(data=subset(gauge_data, season=='fall'), n=7, y=10, date_col='Date', q_col='discharge_cfs', plot_fit=F, min_days=82)
 ```
+
+# Other examples: custom seasons and other nQys
 
 ## Irrigation/non-irrigation
 
