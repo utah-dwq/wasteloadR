@@ -3,23 +3,34 @@ title: "Low flow analysis template"
 author: "Your Name Here"
 date: "`r Sys.Date()`"
 output:
-  bookdown::html_document2:
+  html_document:
     theme: yeti
-    toc: true
+    toc: yes
     toc_float:
-      toc_collapsed: true
-editor_options: 
-  markdown: 
+      toc_collapsed: yes
+  pdf_document:
+    toc: yes
+editor_options:
+  markdown:
     wrap: 72
 ---
+
+# Knit to PDF
+
+Note - to knit to PDF, you will need to install a version of latex in
+RStudio and phantomjs (only need to do this once). To do this run
+`` tinytex::install_tinytex() & `webshot::install_phantomjs()` `` in the
+R console. You can then knit to PDF clicking the dropdown menu beside
+the knit button in the above menu bar.
 
 # Packages
 
 Install wasteloadR & wqTools if necessary.
 
 ```{r, eval=F}
-devtools::install_github('utah-dwq/wqTools', upgrade = c('never')) #Note- recommend updating other packages independently.
+devtools::install_github('utah-dwq/wqTools', upgrade = c('never')) 
 devtools::install_github('utah-dwq/wasteloadR', upgrade = c('never'))
+#Note- recommend updating other packages independently
 ```
 
 ```{r, libs, message=FALSE, warnings=FALSE}
@@ -33,6 +44,7 @@ library(writexl)
 ```
 
 # User inputs
+
 Site number 10171000 is Jordan River at 1700 S. You can find appropriate
 gauge sites via USGS NWIS or with `wqTools::findSites()`. Parameter code
 00060 = discharge in cfs.
@@ -46,6 +58,7 @@ startDate <- "1989-10-01" # Enter start date of gauge data download
 ```
 
 # Read USGS daily flow values and gauge info
+
 ```{r, read-gauge}
 gauge_data=dataRetrieval::readNWISdv(siteNumbers=Site,
   startDate=startDate, parameterCd='00060') %>% 
@@ -57,13 +70,17 @@ SiteName <- gauge_info$station_nm[1]
 ```
 
 # Export raw gauge data
+
 ```{r, export-raw}
 write_xlsx(list(gauge_info=gauge_info, gauge_data=gauge_data), path="raw_gauge_data.xlsx")
 ```
 
-
 # Assign seasons and water year
-Note - The seasons() function defines seasons as winter = c(1, 2, 3), spring = c(4, 5, 6), summer = c(7, 8, 9), fall = c(10, 11, 12) by default, but can be custom modified. See the irrigation/non-irrigation section for an example of custom season definitions.
+
+Note - The seasons() function defines seasons as winter = c(1, 2, 3),
+spring = c(4, 5, 6), summer = c(7, 8, 9), fall = c(10, 11, 12) by
+default, but can be custom modified. See the irrigation/non-irrigation
+section for an example of custom season definitions.
 
 ```{r, seas-wy}
 gauge_data=gauge_data %>% 
@@ -100,7 +117,7 @@ plot_ly(data=gauge_data, x=~Date, y=~discharge_cfs, type='scatter', mode='lines'
 
 ```{r, boxplots, fig.cap=paste0(SiteName, ' annual, monthly, and seasonal boxplots.')}
 plot_ly() %>% 
-	add_trace(data=gauge_data, type='box', x=~wateryear, y=~discharge_cfs) %>% 
+  add_trace(data=gauge_data, type='box', x=~wateryear, y=~discharge_cfs) %>% 
   layout(title = "",
 		yaxis = list(title = 'Discharge (cfs)'),
 		xaxis = list(side = 'left', title = 'Water Year', showline=TRUE)
@@ -116,7 +133,7 @@ plot_ly() %>%
 	)
 
 plot_ly() %>% 
-	add_trace(data=gauge_data, type='box', x=~season, y=~discharge_cfs) %>% 
+  add_trace(data=gauge_data, type='box', x=~season, y=~discharge_cfs) %>% 
   layout(title = "",
 		yaxis = list(title = 'Discharge (cfs)'),
 		xaxis = list(side = 'left', title = 'Season', showline=TRUE)
@@ -132,7 +149,7 @@ plot_ly() %>%
 	)
 
 plot_ly() %>% 
-	add_trace(data=gauge_data, type='box', x=~month, y=~discharge_cfs) %>% 
+  add_trace(data=gauge_data, type='box', x=~month, y=~discharge_cfs) %>% 
   layout(title = "",
 		yaxis = list(title = 'Discharge (cfs)'),
 		xaxis = list(side = 'left', title = 'Month', showline=TRUE)
@@ -150,14 +167,22 @@ plot_ly() %>%
 
 ```
 
-Example: subset to water year 2000 through present
+# Example: subset to selected years
 
 ```{r, subset-ex}
 SubStartDate <- "1989-10-01" # Enter start date of gauge data for use in low flow analysis
 gauge_data=subset(gauge_data, Date>='1999-10-01')
 ```
 
-# Annual 7Q10
+# nQy calculations
+
+The nQy function is contained within the [wasteloadR R
+package](https://github.com/utah-dwq/wasteloadR){target="_blank"}. It
+calculates two types of nQy values. One from a fitted probability of
+annual n-day minima, and one from the 1/n-th quantile of of annual n-day
+minima. See the help file with ?nQy() for more information.
+
+## Annual 7Q10
 
 ```{r, 7Q10}
 gauge_7Q10 <- nQy(data=gauge_data, n=7, y=10, date_col='Date', 
@@ -167,7 +192,7 @@ gauge_7Q10_annualnday <- gauge_7Q10$annual_mins_fit
 kable(gauge_7Q10_annualnday, caption=paste0(SiteName, " Annual nday Timeseries"), digits=3)
 ```
 
-# Examine annual 7Q10 fit plot
+## Examine annual 7Q10 fit plot
 
 Note: by default, nQy() will display a fitted probability plot of n-day
 annual minima. The function also exports this plot as the object
@@ -176,25 +201,28 @@ automatic plotting and examine plots manually. The fit_plot is a ggplot2
 object and can be modified via normal ggplot methods. For example, here
 we add a custom title to the plot.
 
-```{r, fit-plot, fig.cap="Jordan River 1700 S 7Q10 probability fit."}
+```{r, fit-plot, fig.cap=paste0(SiteName, ' Probability Fit Plot')}
 gauge_7Q10$fit_plot + 
   ggtitle(paste0(SiteName, ' Probability Fit Plot')) +
   theme(legend.position="bottom")
 ```
 
-# Seasonal 7Q10s
+## Seasonal 7Q10s
 
-To calculate seasonal or other custom nQy values, 
-subset your data to desired season and feed to nQy function. Use an
-appropriate min_days setting. In this case, we've divided the year into
-4 seasons, and want our min_days to be approximately 90% of a season
-(365/4\*0.9 = 82).
+To calculate seasonal or other custom nQy values, subset your data to
+desired season and feed to nQy function. Use an appropriate min_days
+setting. In this case, we've divided the year into 4 seasons, and want
+our min_days to be approximately 90% of a season (365/4\*0.9 = 82).
 
 ```{r, seasonal-7Q10}
-gauge_7Q10_winter=nQy(data=subset(gauge_data, season=='winter'), n=7, y=10, date_col='Date', q_col='discharge_cfs', plot_fit=F, min_days=82)
-gauge_7Q10_spring=nQy(data=subset(gauge_data, season=='spring'), n=7, y=10, date_col='Date', q_col='discharge_cfs', plot_fit=F, min_days=82)
-gauge_7Q10_summer=nQy(data=subset(gauge_data, season=='summer'), n=7, y=10, date_col='Date', q_col='discharge_cfs', plot_fit=F, min_days=82)
-gauge_7Q10_fall=nQy(data=subset(gauge_data, season=='fall'), n=7, y=10, date_col='Date', q_col='discharge_cfs', plot_fit=F, min_days=82)
+gauge_7Q10_winter=nQy(data=subset(gauge_data, season=='winter'), n=7, y=10,
+  date_col='Date', q_col='discharge_cfs', plot_fit=F, min_days=82)
+gauge_7Q10_spring=nQy(data=subset(gauge_data, season=='spring'), n=7, y=10,
+  date_col='Date', q_col='discharge_cfs', plot_fit=F, min_days=82)
+gauge_7Q10_summer=nQy(data=subset(gauge_data, season=='summer'), n=7, y=10,
+  date_col='Date', q_col='discharge_cfs', plot_fit=F, min_days=82)
+gauge_7Q10_fall=nQy(data=subset(gauge_data, season=='fall'), n=7, y=10,
+  date_col='Date', q_col='discharge_cfs', plot_fit=F, min_days=82)
 ```
 
 # Other examples: custom seasons and other nQys
@@ -208,17 +236,78 @@ and min_days as appropriate.
 ### User Input Required ###
 irrMonth <- c(5,6,7,8,9) # Enter months of irrigation season
 nonirrMonth <- c(1,2,3,4,10,11,12) # Enter months of non-irrigation season
-irrminDays <- 120 # Minimum number of days in season with data to include year in analysis
-nonirrminDays <- 160 # Minimum number of days in season with data to include year in analysis
-###
+# Minimum number of days in season with data to include year in analysis
+irrminDays <- 120
+# Minimum number of days in season with data to include year in analysis
+nonirrminDays <- 160 
 
-gauge_data=gauge_data %>% mutate(irrigation=seasons(Date, seasons=list('y'=irrMonth, 'n'=nonirrMonth)))
-guage_irr=nQy(data=subset(gauge_data, irrigation=='y'), n=7, y=10, date_col='Date', q_col='discharge_cfs', min_days=irrminDays)
-gauge_7Q10_nonirr=nQy(data=subset(gauge_data, irrigation=='n'), n=7, y=10, date_col='Date', q_col='discharge_cfs', min_days=nonirrminDays)
+gauge_data=gauge_data %>%
+  mutate(irrigation=seasons(Date, seasons=list('y'=irrMonth, 'n'=nonirrMonth)))
+guage_irr=nQy(data=subset(gauge_data, irrigation=='y'), n=7, y=10, date_col='Date',
+  q_col='discharge_cfs', min_days=irrminDays)
+gauge_7Q10_nonirr=nQy(data=subset(gauge_data, irrigation=='n'), n=7, y=10,
+  date_col='Date', q_col='discharge_cfs', min_days=nonirrminDays)
 ```
 
 ## Other nQy types (e.g. 1Q10)
 
 ```{r, other-nqy}
 gauge_1Q10=nQy(data=gauge_data, n=1, y=10, date_col='Date', q_col='discharge_cfs')
+```
+
+# Grab sample alternative approach
+
+This example shows an alternative option to calculate grab sample flow
+measurement summary statistics in cases where an appropriate local USGS
+gauge is not available to calculate low flow statistics. To do this
+we'll query flow measurements at DWQ site locations from the Water
+Quality Portal, then group & summarize the data to calculate summary
+statistics for potential use as critical flow values.
+
+## Read grab sample data
+
+Use Utah DWQ sites on the Logan River as an example.
+
+```{r, read-grab}
+grab_flow=readWQP(type="result",
+  siteid=c("UTAHDWQ_WQX-4905250","UTAHDWQ_WQX-4905290", "UTAHDWQ_WQX-4905310"),
+  CharacteristicName="Flow")
+grab_flow$ActivityStartDate=as.Date(grab_flow$ActivityStartDate)
+
+grab_flow_sites=readWQP(type="sites",
+  siteid=c("UTAHDWQ_WQX-4905250","UTAHDWQ_WQX-4905290", "UTAHDWQ_WQX-4905310"))
+
+grab_flow=merge(grab_flow, grab_flow_sites)
+
+# Check on units
+kable(table(grab_flow$CharacteristicName, grab_flow$ResultMeasure.MeasureUnitCode))
+
+```
+
+## Summarize grab sample flow
+
+In this example, we group by site code, parameter, and season to
+calculate summary statistics for each grouping. You can add or drop
+grouping columns to calculate stats on different groups (e.g. remove the
+site code column group to pool data from multiple sites, or remove
+season to get annual stats).
+
+```{r, summarize-grab}
+
+grab_flow_summary=grab_flow %>% 
+  mutate(
+    season=seasons(ActivityStartDate), 
+  ) %>%
+  group_by(MonitoringLocationIdentifier, MonitoringLocationName, 
+    CharacteristicName, season) %>%
+  summarize(
+    min=min(ResultMeasureValue),
+    count=n(),
+    pctile10=quantile(ResultMeasureValue,0.1), 
+    .groups="drop"
+  )
+
+
+kable(grab_flow_summary)
+
 ```
