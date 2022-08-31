@@ -32,6 +32,7 @@ Returns a list of results including the calculated nQy statistics (from fitted p
 }
 \description{
 Calculates n-day rolling averages & minimum annual n-day averages, fits a probability distribution to minimum annual average flows, and calculates low flow statistics (nQy) for discharge data.
+See https://vt-hydroinformatics.github.io/lfas.html#fit-to-pearson-type-iii-distribution for information on the probability fitting approach used to calculate nQy in this function.
 }
 \examples{
 # Basic usage

@@ -1,6 +1,7 @@
 #' Generate low flow statistics (nQy) for wasteloads
 #'
 #' Calculates n-day rolling averages & minimum annual n-day averages, fits a probability distribution to minimum annual average flows, and calculates low flow statistics (nQy) for discharge data.
+#' See https://vt-hydroinformatics.github.io/lfas.html#fit-to-pearson-type-iii-distribution for information on the probability fitting approach used to calculate nQy in this function.
 #' @param data Input data. A dataframe columns of daily discharge values and dates.
 #' @param n Numeric. Days for rolling time period averages. Default 7.
 #' @param y Numeric. Recurrence interval in years
