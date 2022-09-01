@@ -25,7 +25,7 @@ nQy(
 
 \item{q_col}{Column name containing discharge values. Any appropriate and uniform discharge units are OK. The result will be in the same units as the input.}
 
-\item{min_days}{Minimum number of days required to include a year in the n-day annual minima. Recommend 328 for annual statistics and 82 for seasonal (~10\%).}
+\item{min_days}{Minimum number of days required to include a year in the n-day annual minima. Recommend 328 for annual statistics and 82 for seasonal (~90\%).}
 }
 \value{
 Returns a list of results including the calculated nQy statistics (from fitted probability and 1/y percentile), a data frame of annual n-day flow minima and distribution information, and a plot to examine the fit.

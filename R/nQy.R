@@ -7,7 +7,7 @@
 #' @param y Numeric. Recurrence interval in years
 #' @param date_col Column name containing date values. Must be in standard "YYYY-MM-DD" date format.
 #' @param q_col Column name containing discharge values. Any appropriate and uniform discharge units are OK. The result will be in the same units as the input.
-#' @param min_days Minimum number of days required to include a year in the n-day annual minima. Recommend 328 for annual statistics and 82 for seasonal (~10%).
+#' @param min_days Minimum number of days required to include a year in the n-day annual minima. Recommend 328 for annual statistics and 82 for seasonal (~90%).
 #' @return Returns a list of results including the calculated nQy statistics (from fitted probability and 1/y percentile), a data frame of annual n-day flow minima and distribution information, and a plot to examine the fit.
 #' @import dplyr
 #' @importFrom lubridate year
