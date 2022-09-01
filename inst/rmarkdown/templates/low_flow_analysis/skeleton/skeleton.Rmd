@@ -301,8 +301,8 @@ grab_flow_summary=grab_flow %>%
   group_by(MonitoringLocationIdentifier, MonitoringLocationName, 
     CharacteristicName, season) %>%
   summarize(
-    min=min(ResultMeasureValue),
     count=n(),
+    min=min(ResultMeasureValue),
     pctile10=quantile(ResultMeasureValue,0.1), 
     .groups="drop"
   )
