@@ -13,10 +13,9 @@ updatePermits=function(){
 	permits=subset(permits, properties$prefix %in% c('UT0'))
 	permits_coords=do.call(rbind.data.frame,permits$geometry$coordinates)
 	names(permits_coords)=c("dec_long","dec_lat")
-	permits_coords=data.frame(permits$properties[,c("SourceID","CWPName","CWPFacilityTypeIndicator")], (permits_coords))
+	permits_coords=data.frame(permits$properties[,c("SourceID","CWPName")], (permits_coords))
 	names(permits_coords)[names(permits_coords)=="SourceID"]="permit_id"
 	names(permits_coords)[names(permits_coords)=="CWPName"]="permit_name"
-	names(permits_coords)[names(permits_coords)=="CWPFacilityTypeIndicator"]="permit_type"
 	names(permits_coords)[names(permits_coords)=="dec_long"]="LongitudeMeasure"
 	names(permits_coords)[names(permits_coords)=="dec_lat"]="LatitudeMeasure"
 	#path=paste0(path.package('wasteloadR'),'/extdata')
