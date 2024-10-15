@@ -20,8 +20,8 @@ updatePermits=function(){
 	names(permits_coords)[names(permits_coords)=="dec_lat"]="LatitudeMeasure"
 	#path=paste0(path.package('wasteloadR'),'/extdata')
 	#save(permits_coords, file=paste0(path,"/permits.Rdata"))
-	permits_coords=permits_coords %>% wqTools::assignPolys(wqTools::au_poly) %>% wqTools::assignPolys(wqTools::bu_poly) %>% wqTools::assignPolys(wqTools::wmu_poly)
-	permits_coords=permits_coords[,!names(permits_coords) %in% "polyID"]
-	save(permits_coords, file="C:\\Users\\jvander\\Documents\\R\\wasteloadR\\data\\permits_coords.Rdata")	
+	#permits_coords=permits_coords %>% wqTools::assignPolys(wqTools::au_poly) %>% wqTools::assignPolys(wqTools::bu_poly) %>% wqTools::assignPolys(wqTools::wmu_poly)
+	#permits_coords=permits_coords[,!names(permits_coords) %in% "polyID"]
+	save(permits_coords, file="C:\\Users\\jvander\\Documents\\R\\wasteloadR\\data\\permits_coords2.Rdata")	
 }
 
